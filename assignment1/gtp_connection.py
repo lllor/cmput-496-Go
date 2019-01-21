@@ -201,6 +201,9 @@ class GtpConnection():
 
     def gogui_rules_legal_moves_cmd(self, args):
         """ Implement this function for Assignment 1 """
+        if(self.gogui_rules_final_result_cmd(0)):
+        		self.respond([])
+        		return
         
         #moves = GoBoardUtil.generate_legal_moves(self.board, 0)
         moves = self.board.get_empty_points()
@@ -242,8 +245,35 @@ class GtpConnection():
             str += '\n'
         self.respond(str)
         
+    def checkRow(self):
+        size = self.board.size
+        board = GoBoardUtil.get_twoD_board(self.board)
+        for i in range(size):
+	    black = 0
+            white = 0            
+            for j in range(size):
+                currentColor = board[i][j]
+                if ( currentColor== 0):
+		    black = 0
+		    white = 0
+		    empty = True
+		    
+		elif (currentColor == 1):
+		    black += 1
+		    white = 0
+		elif (currentColor == 2):
+		    white += 1
+		    black = 0
+		
+		if (black >= 5):
+		    self.respond("Black")  
+		    return True
+		elif (white >= 5):
+		    self.respond("White")
+		    print(1)
+		    return True	
+        return False
     
-        
     def gogui_rules_final_result_cmd(self, args):
         """ Implement this function for Assignment 1 """
         size = self.board.size
@@ -251,32 +281,7 @@ class GtpConnection():
         print(board)
         empty = False
         
-        '''
-        search for row
-        '''
-        for i in range(size):
-            black = 0
-            white = 0            
-            for j in range(size):
-                currentColor = board[i][j]
-                if ( currentColor== 0):
-                    black = 0
-                    white = 0
-                    empty = True
-                    
-                elif (currentColor == 1):
-                    black += 1
-                    white = 0
-                elif (currentColor == 2):
-                    white += 1
-                    black = 0
-                
-                if (black >= 5):
-                    self.respond("Black")  
-                    return
-                elif (white >= 5):
-                    self.respond("White")
-                    return
+        
         '''
         search for col
         '''        
@@ -297,37 +302,74 @@ class GtpConnection():
                     
                 if (black >= 5):
                     self.respond("Black")  
-                    return
+                    return True
                 elif (white >= 5):
                     self.respond("White")
-                    return
+                    print(12)
+                    return True
         '''
         search for dia / \
         '''
         for i in range(size):
             for j in range(size):
-                (black,white) = checkDia(board, i, j, 0, 0,"/")
+                (black,white) = self.checkDia(board, i, j, 0, 0,"/")
                 
                 if (black >= 5):
                     self.respond("Black")  
-                    return
+                    return True
                 elif (white >= 5):
                     self.respond("White")
-                    return                
-                (black,white) = checkDia(board, i, j, 0, 0,"\\")
-                print("here",black,white)
+                    print(14)
+                    return True               
+                (black,white) = self.checkDia(board, i, j, 0, 0,"\\")
+                #print("here",black,white)
                 if (black >= 5):
                     self.respond("Black")  
-                    return
+                    return True
                 elif (white >= 5):
                     self.respond("White")
-                    return                
+                    print(13)
+                    return True                
                 
         if empty :
             self.respond("unknown")
-            return
+            return False
         self.respond("Draw")
-        
+        return True
+    
+    def play(self,point,color):
+        if self.board.board[point] == 0:
+            self.board.board[point] = color
+            return True
+        return False
+    
+    def checkDia(self, board, i, j, black, white,flag):
+        currentColor = board[i][j]
+        size = self.board.size
+        if ( currentColor== 0):
+            black = 0
+            white = 0
+        elif (currentColor == 1):
+            black += 1
+            white = 0
+        elif (currentColor == 2):
+            white += 1
+            black = 0
+	    
+        if (black >= 5):
+            return (black, white)  
+        elif (white >= 5):
+            return (black, white)       
+	
+        try:
+            if (flag == "/"):
+                if (j==0):
+                    return (black, white)
+                return checkDia(board, i+1, j-1, black, white,"/")
+            else:
+                return checkDia(board, i+1, j+1, black, white,"\\")
+        except:                  
+            return (black, white)      
 
     def play_cmd(self, args):
         """ Modify this function for Assignment 1 """
@@ -347,7 +389,7 @@ class GtpConnection():
                 self.error("Error executing move {} converted from {}"
                            .format(move, args[1]))
                 return
-            if not self.board.play_move(move, color):
+            if not self.play(move,color):#play_move(move, color):
                 self.respond("Illegal Move: {}".format(board_move))
                 return
             else:
@@ -362,11 +404,16 @@ class GtpConnection():
         """ generate a move for color args[0] in {'b','w'} """
         board_color = args[0].lower()
         color = color_to_int(board_color)
-        move = self.go_engine.get_move(self.board, color)
+        #move = self.go_engine.get_move(self.board, color)
+	if(self.gogui_rules_final_result_cmd(0)):
+            self.respond([])
+            self.respond("pass")
+        move = self.board.get_empty_points()
+        np.random.shuffle(moves)
         move_coord = point_to_coord(move, self.board.size)
         move_as_string = format_point(move_coord)
         if self.board.is_legal(move, color):
-            self.board.play_move(move, color)
+            self.play(move, color)
             self.respond(move_as_string)
         else:
             self.respond("Illegal move: {}".format(move_as_string))
@@ -474,30 +521,9 @@ def color_to_int(c):
                     "BORDER": BORDER}
     return color_to_int[c] 
 
-def checkDia(board, i, j, black, white,flag):
-    currentColor = board[i][j]
-    if ( currentColor== 0):
-        black = 0
-        white = 0
-    elif (currentColor == 1):
-        black += 1
-        white = 0
-    elif (currentColor == 2):
-        white += 1
-        black = 0
-    try:
-        if (black >= 5):
-            return (black, white)  
-            
-        elif (white >= 5):
-            return (black, white)   
-            
-        if (flag == "/"):
-            return checkDia(board, i+1, j-1, black, white,"/")
-        else:
-            return checkDia(board, i+1, j+1, black, white,"\\")
-    except:                  
-        return (black, white)  
+
+
+
     
 #play B G1
 #play B E2
