@@ -313,7 +313,7 @@ class GtpConnection():
                     return 'white'
         return
         
-    def checkdia(self):
+    def checkDouble(self):
         size = self.board.size
         board = GoBoardUtil.get_twoD_board(self.board)
         '''
@@ -357,21 +357,15 @@ class GtpConnection():
             self.respond(flag)
             return
         
-        flag = self.checkdia()
+        flag = self.checkDouble()
         if flag:
             self.respond(flag)
             return         
-        
-        
         
         if(self.checkEmpty()):
             self.respond("unknown")
         else:
             self.respond("Draw")
-              
-        #if empty :
-        #    self.respond("unknown")
-        #    return False
     
     def play(self,point,color):
         if self.board.board[point] == 0:
