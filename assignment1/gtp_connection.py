@@ -202,8 +202,8 @@ class GtpConnection():
     def gogui_rules_legal_moves_cmd(self, args):
         """ Implement this function for Assignment 1 """
         if(self.gogui_rules_final_result_cmd(0)):
-        		self.respond([])
-        		return
+            self.respond([])
+            return
         
         #moves = GoBoardUtil.generate_legal_moves(self.board, 0)
         moves = self.board.get_empty_points()
@@ -244,44 +244,48 @@ class GtpConnection():
                     assert False
             str += '\n'
         self.respond(str)
-        
-    def checkRow(self):
+    def checkEmpty(self):
         size = self.board.size
         board = GoBoardUtil.get_twoD_board(self.board)
         for i in range(size):
-	    black = 0
+            black = 0
             white = 0            
             for j in range(size):
                 currentColor = board[i][j]
                 if ( currentColor== 0):
-		    black = 0
-		    white = 0
-		    empty = True
-		    
-		elif (currentColor == 1):
-		    black += 1
-		    white = 0
-		elif (currentColor == 2):
-		    white += 1
-		    black = 0
-		
-		if (black >= 5):
-		    self.respond("Black")  
-		    return True
-		elif (white >= 5):
-		    self.respond("White")
-		    print(1)
-		    return True	
+                    return True
         return False
     
-    def gogui_rules_final_result_cmd(self, args):
-        """ Implement this function for Assignment 1 """
+    def checkRow(self):
         size = self.board.size
         board = GoBoardUtil.get_twoD_board(self.board)
-        print(board)
-        empty = False
-        
-        
+        for i in range(size):
+            black = 0
+            white = 0            
+            for j in range(size):
+                currentColor = board[i][j]
+                if ( currentColor== 0):
+                    black = 0
+                    white = 0
+    
+                elif (currentColor == 1):
+                    black += 1
+                    white = 0
+                elif (currentColor == 2):
+                    white += 1
+                    black = 0
+                
+                if (black >= 5):
+                    #self.respond("Black")  
+                    return 'black'
+                elif (white >= 5):
+                    #self.respond("White")
+                    return 'white'	
+        return
+    
+    def checkCol(self):
+        size = self.board.size
+        board = GoBoardUtil.get_twoD_board(self.board)
         '''
         search for col
         '''        
@@ -301,12 +305,17 @@ class GtpConnection():
                     black = 0     
                     
                 if (black >= 5):
-                    self.respond("Black")  
-                    return True
+                    #self.respond("Black")  
+                    return 'black'
                 elif (white >= 5):
-                    self.respond("White")
+                    #self.respond("White")
                     print(12)
-                    return True
+                    return 'white'
+        return
+        
+    def checkdia(self):
+        size = self.board.size
+        board = GoBoardUtil.get_twoD_board(self.board)
         '''
         search for dia / \
         '''
@@ -329,13 +338,40 @@ class GtpConnection():
                 elif (white >= 5):
                     self.respond("White")
                     print(13)
-                    return True                
-                
-        if empty :
+                    return True 
+    
+    
+    def gogui_rules_final_result_cmd(self, args):
+        """ Implement this function for Assignment 1 """
+        size = self.board.size
+        board = GoBoardUtil.get_twoD_board(self.board)
+        #print(board)
+        
+        flag = self.checkRow()
+        if (flag):
+            self.respond(flag)
+            return
+            
+        flag = self.checkCol()
+        if flag:
+            self.respond(flag)
+            return
+        
+        flag = self.checkdia()
+        if flag:
+            self.respond(flag)
+            return         
+        
+        
+        
+        if(self.checkEmpty()):
             self.respond("unknown")
-            return False
-        self.respond("Draw")
-        return True
+        else:
+            self.respond("Draw")
+              
+        #if empty :
+        #    self.respond("unknown")
+        #    return False
     
     def play(self,point,color):
         if self.board.board[point] == 0:
@@ -354,13 +390,11 @@ class GtpConnection():
             white = 0
         elif (currentColor == 2):
             white += 1
-            black = 0
-	    
+            black = 0 
         if (black >= 5):
             return (black, white)  
         elif (white >= 5):
             return (black, white)       
-	
         try:
             if (flag == "/"):
                 if (j==0):
@@ -370,7 +404,7 @@ class GtpConnection():
                 return checkDia(board, i+1, j+1, black, white,"\\")
         except:                  
             return (black, white)      
-
+        
     def play_cmd(self, args):
         """ Modify this function for Assignment 1 """
         """
@@ -405,7 +439,7 @@ class GtpConnection():
         board_color = args[0].lower()
         color = color_to_int(board_color)
         #move = self.go_engine.get_move(self.board, color)
-	if(self.gogui_rules_final_result_cmd(0)):
+        if(self.gogui_rules_final_result_cmd(0)):
             self.respond([])
             self.respond("pass")
         move = self.board.get_empty_points()
