@@ -202,7 +202,8 @@ class GtpConnection():
     def gogui_rules_legal_moves_cmd(self, args):
         """ Implement this function for Assignment 1 """
         
-        moves = GoBoardUtil.generate_legal_moves(self.board, 0)
+        #moves = GoBoardUtil.generate_legal_moves(self.board, 0)
+        moves = self.board.get_empty_points()
         gtp_moves = []
         for move in moves:
             coords = point_to_coord(move, self.board.size)
@@ -211,7 +212,7 @@ class GtpConnection():
         self.respond(sorted_moves)
 
         
-        self.respond()
+        #self.respond()
         return
 
     def gogui_rules_side_to_move_cmd(self, args):
@@ -240,31 +241,93 @@ class GtpConnection():
                     assert False
             str += '\n'
         self.respond(str)
-            
+        
+    
+        
     def gogui_rules_final_result_cmd(self, args):
         """ Implement this function for Assignment 1 """
-        black = 0
-        white = 0
-        pointer = 0
         size = self.board.size
+        board = GoBoardUtil.get_twoD_board(self.board)
+        print(board)
+        empty = False
         
-        for row in range(0,size,1):
-            start = self.board.row_start(row + 1)
-           # print(start)
-            for i in range(size):
-                #str += '.'
-                point = self.board.board[start + i]
-                
-                if point == EMPTY:
-                    continue
-                elif point == BLACK:
-                    nbc = self.board.neighbors_of_color(point,1)
-                    if nbc:
-                        
+        '''
+        search for row
+        '''
+        for i in range(size):
+            black = 0
+            white = 0            
+            for j in range(size):
+                currentColor = board[i][j]
+                if ( currentColor== 0):
+                    black = 0
+                    white = 0
+                    empty = True
                     
-
+                elif (currentColor == 1):
+                    black += 1
+                    white = 0
+                elif (currentColor == 2):
+                    white += 1
+                    black = 0
+                
+                if (black >= 5):
+                    self.respond("Black")  
+                    return
+                elif (white >= 5):
+                    self.respond("White")
+                    return
+        '''
+        search for col
+        '''        
+        for j in range(size):
+            black = 0
+            white = 0            
+            for i in range(size):
+                currentColor = board[i][j]
+                if ( currentColor== 0):
+                    black = 0
+                    white = 0
+                elif (currentColor == 1):
+                    black += 1
+                    white = 0
+                elif (currentColor == 2):
+                    white += 1
+                    black = 0     
+                    
+                if (black >= 5):
+                    self.respond("Black")  
+                    return
+                elif (white >= 5):
+                    self.respond("White")
+                    return
+        '''
+        search for dia / \
+        '''
+        for i in range(size):
+            for j in range(size):
+                (black,white) = checkDia(board, i, j, 0, 0,"/")
+                
+                if (black >= 5):
+                    self.respond("Black")  
+                    return
+                elif (white >= 5):
+                    self.respond("White")
+                    return                
+                (black,white) = checkDia(board, i, j, 0, 0,"\\")
+                print("here",black,white)
+                if (black >= 5):
+                    self.respond("Black")  
+                    return
+                elif (white >= 5):
+                    self.respond("White")
+                    return                
+                
+        if empty :
+            self.respond("unknown")
+            return
+        self.respond("Draw")
         
-        self.respond("unknown")
 
     def play_cmd(self, args):
         """ Modify this function for Assignment 1 """
@@ -410,3 +473,35 @@ def color_to_int(c):
     color_to_int = {"b": BLACK , "w": WHITE, "e": EMPTY, 
                     "BORDER": BORDER}
     return color_to_int[c] 
+
+def checkDia(board, i, j, black, white,flag):
+    currentColor = board[i][j]
+    if ( currentColor== 0):
+        black = 0
+        white = 0
+    elif (currentColor == 1):
+        black += 1
+        white = 0
+    elif (currentColor == 2):
+        white += 1
+        black = 0
+    try:
+        if (black >= 5):
+            return (black, white)  
+            
+        elif (white >= 5):
+            return (black, white)   
+            
+        if (flag == "/"):
+            return checkDia(board, i+1, j-1, black, white,"/")
+        else:
+            return checkDia(board, i+1, j+1, black, white,"\\")
+    except:                  
+        return (black, white)  
+    
+#play B G1
+#play B E2
+#play B D3
+#play B C4
+#play B B5
+#gogui-rules_final_result

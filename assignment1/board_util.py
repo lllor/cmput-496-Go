@@ -100,7 +100,11 @@ class GoBoardUtil(object):
             the color to generate the move for.
         """
         moves = board.get_empty_points()
-        return moves
+        legal_moves = []
+        for move in moves:
+            if board.is_legal(move, color):
+                legal_moves.append(move)
+        return legal_moves
             
     @staticmethod       
     def generate_random_move(board, color, use_eye_filter):
