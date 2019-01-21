@@ -203,6 +203,7 @@ class GtpConnection():
         """ Implement this function for Assignment 1 """
         if(self.gogui_rules_final_result_cmd(0)):
             self.respond([])
+            print("error")
             return
         
         #moves = GoBoardUtil.generate_legal_moves(self.board, 0)
@@ -321,24 +322,24 @@ class GtpConnection():
         '''
         for i in range(size):
             for j in range(size):
-                (black,white) = self.checkDia(board, i, j, 0, 0,"/")
                 
+                (black,white) = self.checkDia(board, i, j, 0, 0,"/")
+                #print(i,j,black,white)
                 if (black >= 5):
-                    self.respond("Black")  
-                    return True
+                    #self.respond("Black")  
+                    return 'black'
                 elif (white >= 5):
-                    self.respond("White")
-                    print(14)
-                    return True               
+                    #self.respond("White")
+                    #print(14)
+                    return 'white'             
                 (black,white) = self.checkDia(board, i, j, 0, 0,"\\")
                 #print("here",black,white)
                 if (black >= 5):
-                    self.respond("Black")  
-                    return True
+                    #self.respond("Black")  
+                    return 'black'
                 elif (white >= 5):
-                    self.respond("White")
-                    print(13)
-                    return True 
+                    #self.respond("White")
+                    return 'white' 
     
     
     def gogui_rules_final_result_cmd(self, args):
@@ -350,22 +351,25 @@ class GtpConnection():
         flag = self.checkRow()
         if (flag):
             self.respond(flag)
-            return
+            return True
             
         flag = self.checkCol()
         if flag:
             self.respond(flag)
-            return
+            return True
         
         flag = self.checkDouble()
         if flag:
             self.respond(flag)
-            return         
+            return True     
         
         if(self.checkEmpty()):
             self.respond("unknown")
+            return False
         else:
             self.respond("Draw")
+            return True
+        return False
     
     def play(self,point,color):
         if self.board.board[point] == 0:
@@ -393,9 +397,9 @@ class GtpConnection():
             if (flag == "/"):
                 if (j==0):
                     return (black, white)
-                return checkDia(board, i+1, j-1, black, white,"/")
+                return self.checkDia(board, i+1, j-1, black, white,"/")
             else:
-                return checkDia(board, i+1, j+1, black, white,"\\")
+                return self.checkDia(board, i+1, j+1, black, white,"\\")
         except:                  
             return (black, white)      
         
@@ -438,13 +442,15 @@ class GtpConnection():
             self.respond("pass")
         move = self.board.get_empty_points()
         np.random.shuffle(moves)
-        move_coord = point_to_coord(move, self.board.size)
-        move_as_string = format_point(move_coord)
-        if self.board.is_legal(move, color):
-            self.play(move, color)
-            self.respond(move_as_string)
-        else:
-            self.respond("Illegal move: {}".format(move_as_string))
+        
+        
+       # move_coord = point_to_coord(move, self.board.size)
+       # move_as_string = format_point(move_coord)
+       # if self.board.is_legal(move, color):
+       #     self.play(move, color)
+       #     self.respond(move_as_string)
+       # else:
+       #     self.respond("Illegal move: {}".format(move_as_string))
 
     """
     ==========================================================================
