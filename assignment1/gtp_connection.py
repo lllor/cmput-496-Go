@@ -203,7 +203,7 @@ class GtpConnection():
         """ Implement this function for Assignment 1 """
         if(self.gogui_rules_final_result_cmd(0)):
             self.respond([])
-            print("error")
+            #print("error")
             return
         
         #moves = GoBoardUtil.generate_legal_moves(self.board, 0)
@@ -437,11 +437,20 @@ class GtpConnection():
         board_color = args[0].lower()
         color = color_to_int(board_color)
         #move = self.go_engine.get_move(self.board, color)
-        if(self.gogui_rules_final_result_cmd(0)):
+        if(self.checkEmpty()):
+            
+            moves = self.board.get_empty_points()
+            gtp_moves = []
+            for move in moves:
+                coords = point_to_coord(move, self.board.size)
+                gtp_moves.append(format_point(coords))
+            #sorted_moves = ' '.join(sorted(gtp_moves))
+            self.respond(gtp_moves[0])
+        else:
             self.respond([])
             self.respond("pass")
-        move = self.board.get_empty_points()
-        np.random.shuffle(moves)
+        
+        
         
         
        # move_coord = point_to_coord(move, self.board.size)
