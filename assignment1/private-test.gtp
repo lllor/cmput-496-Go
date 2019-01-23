@@ -1,0 +1,200 @@
+boardsize 7
+clear_board
+play B E1
+00 play W E1
+#? [illegal move: "e1" occupied]
+
+clear_board
+10 play Q A1
+#? [illegal move: "q" wrong color]
+
+20 play B A8
+#? [illegal move: "a10" wrong]
+
+clear_board
+play B A1
+play W B3
+play B A2
+play W B4
+play B A3
+play W B5
+play B A4
+play W B1
+play B A7
+play W E1
+play B A6
+play W E2
+play B A5
+30 gogui-rules_final_result
+#? [black]
+
+190 genmove w
+#? [resign]
+
+clear_board
+play B A1
+play W C5
+play B B1
+play W F2
+play B C1
+play W A3
+play B D1
+play W A2
+play B E1
+40 gogui-rules_final_result
+#? [black]
+
+clear_board
+play B E3
+play W G1
+play B D4
+play W G2
+play B C5
+play W G5
+play B B6
+play W G7
+play B A7
+50 gogui-rules_final_result
+#? [black]
+
+clear_board
+play B B2
+play W A1
+play B C3
+play W A3
+play B D4
+play W A5
+play B E5
+play W A4
+play B F6
+60 gogui-rules_final_result
+#? [black]
+
+clear_board
+play B A1
+play W E3
+play B E1
+play W E2
+play B B3
+play W E5
+play B D5
+play W E4
+play B E7
+play W E6
+70 gogui-rules_final_result
+#? [white]
+
+clear_board
+play B C6
+play W C4
+play B D6
+play W D4
+play B E6
+play W E4
+play B A4
+play W G4
+play B B4
+play W F4
+80 gogui-rules_final_result
+#? [white]
+
+clear_board
+play B A2
+play W E1
+play B C2
+play W D2
+play B G2
+play W C3
+play B F3
+play W B4
+play B F4
+play W A5
+90 gogui-rules_final_result
+#? [white]
+
+clear_board
+play B A1
+play W A3
+play B A2
+play W B4
+play B A4
+100 gogui-rules_final_result
+#? [unknown]
+
+play W C5
+play B E2
+play W D6
+play B E3
+play W E7
+110 gogui-rules_final_result
+#? [white]
+
+clear_board
+play B E1
+play W B1
+play B F2
+play W A2
+play B A1
+play W C4
+play B E3
+play W D5
+play B D2
+play W C6
+play B C5
+play W B5
+play B G1
+play W E2
+play B G2
+play W G5
+play B D6
+play W G6
+play B G4
+play W E4
+play B F3
+play W F5
+play B F4
+play W F6
+play B F1
+play W F7
+play B G3
+play W G7
+play B C1
+play W D1
+play B E5
+play W E6
+play B D7
+play W E7
+play B A7
+play W C7
+play B B7
+play W C2
+play B B2
+play W A4
+play B D3
+play W D4
+play B B4
+play W A6
+play B B3
+play W B6
+120 gogui-rules_legal_moves
+#? [a3 a5 a3]
+play B A5
+play W C3
+130 gogui-rules_legal_moves
+#? [a3]
+
+140 genmove b
+#? [a3]
+
+150 gogui-rules_legal_moves
+#? []
+
+160 gogui-rules_final_result
+#? [draw]
+
+170 genmove w
+#? [pass]
+
+180 genmove b
+#? [pass]
+

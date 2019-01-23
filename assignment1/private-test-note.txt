@@ -1,0 +1,25 @@
+00 occupied
+10 wrong color
+20 wrong coordinate
+30 black in column
+40 black in row
+50 black in diagonal(/)
+60 black in diagonal(\)
+70 white in column
+80 white in row
+90 white in diagonal(/)
+100 unknown
+110 white in diagonal(\)
+120: legal moves(sorted)
+130: legal moves (1)
+150: legal moves (empty)
+140: genmove (not full)
+170: genmove (full & draw) :w
+180: genmove (full & draw) :b
+190: genmove (the opponent win)
+160 draw:
+	(advoid capture w:137, b:139
+	advoid ko rule # impossible
+	can put in eye b:152, w:153
+	can suicide b:130, w:155)
+
