@@ -416,21 +416,21 @@ class GtpConnection():
                 return
             if(self.checkEmpty()):
                 if(self.checkRow()):
-                    self.respond("Illegal Move")
+                    self.respond("1illegal Move")
                     return
                 elif(self.checkCol()):
-                    self.respond("Illegal Move")
+                    self.respond("2illegal Move")
                     return
                 elif(self.checkDouble()):
-                    self.respond("Illegal Move")
+                    self.respond("3illegal Move")
                     return
                 else:
                     if not self.board.play_move(move,color):
-                        self.respond("illegal move: "+"\""+args[1].lower()+"\" occupied")
+                        self.respond("5illegal move: "+"\""+args[1].lower()+"\" occupied")
                         return
                 
             else:
-                self.respond("Illegal Move")
+                self.respond("4illegal Move")
                 return
             self.respond()
         except Exception as e:
@@ -458,8 +458,11 @@ class GtpConnection():
                 for move in moves:
                     coords = point_to_coord(move, self.board.size)
                     gtp_moves.append(format_point(coords))
-                self.respond(gtp_moves[0])
-                self.board.play_move(moves[0],color)
+                ran = np.random.randint(len(moves))
+                self.respond(gtp_moves[ran])
+                self.board.play_move(moves[ran],color)
+               # self.respond(gtp_moves[0])
+               # self.board.play_move(moves[0],color)
             
         else:
             self.respond("pass")
