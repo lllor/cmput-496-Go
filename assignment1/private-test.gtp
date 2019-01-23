@@ -177,7 +177,7 @@ play W A6
 play B B3
 play W B6
 13 gogui-rules_legal_moves
-#? [a3 a5 a3]
+#? [a3 a5 c3]
 play B A5
 play W C3
 14 gogui-rules_legal_moves

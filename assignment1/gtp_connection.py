@@ -416,21 +416,21 @@ class GtpConnection():
                 return
             if(self.checkEmpty()):
                 if(self.checkRow()):
-                    self.respond("1illegal Move")
+                    self.respond("illegal Move")
                     return
                 elif(self.checkCol()):
-                    self.respond("2illegal Move")
+                    self.respond("illegal Move")
                     return
                 elif(self.checkDouble()):
-                    self.respond("3illegal Move")
+                    self.respond("illegal Move")
                     return
                 else:
                     if not self.board.play_move(move,color):
-                        self.respond("5illegal move: "+"\""+args[1].lower()+"\" occupied")
+                        self.respond("illegal move: "+"\""+args[1].lower()+"\" occupied")
                         return
                 
             else:
-                self.respond("4illegal Move")
+                self.respond("illegal Move")
                 return
             self.respond()
         except Exception as e:
