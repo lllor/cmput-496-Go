@@ -1,7 +1,7 @@
+#!/Library/Frameworks/Python.framework/Versions/3.6/bin/python3
 #!/usr/bin/python3
 #/usr/local/bin/python3
 # Set the path to your python3 above
-
 # Set up relative path for util
 # sys.path[0] is the directory of the current program
 import sys

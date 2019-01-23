@@ -206,13 +206,13 @@ class GtpConnection():
             #print("error")
             #return
         if(self.checkRow()):
-            self.respond([])
+            self.respond('')
             return
         elif(self.checkCol()):
-            self.respond([])
+            self.respond('')
             return
         elif(self.checkDouble()):
-            self.respond([])
+            self.respond('')
             return
         elif(self.checkEmpty()):
             #moves = GoBoardUtil.generate_legal_moves(self.board, 0)
@@ -220,12 +220,12 @@ class GtpConnection():
             gtp_moves = []
             for move in moves:
                 coords = point_to_coord(move, self.board.size)
-                gtp_moves.append(format_point(coords).upper())
-            #sorted_moves = ' '.join(sorted(gtp_moves))
-            self.respond(gtp_moves)#self.respond()
+                gtp_moves.append(format_point(coords))
+            sorted_moves = ' '.join(sorted(gtp_moves))
+            self.respond(sorted_moves)#self.respond()
             return
         else:
-            self.respond([])
+            self.respond('')
             return
 
     def gogui_rules_side_to_move_cmd(self, args):
@@ -331,21 +331,15 @@ class GtpConnection():
             for j in range(size):
                 
                 (black,white) = self.checkDia(board, i, j, 0, 0,"/")
-                #print(i,j,black,white)
                 if (black >= 5):
-                    #self.respond("Black")  
                     return 'black'
                 elif (white >= 5):
-                    #self.respond("White")
-                    #print(14)
                     return 'white'             
                 (black,white) = self.checkDia(board, i, j, 0, 0,"\\")
                 #print("here",black,white)
-                if (black >= 5):
-                    #self.respond("Black")  
+                if (black >= 5): 
                     return 'black'
                 elif (white >= 5):
-                    #self.respond("White")
                     return 'white' 
     
     
@@ -374,14 +368,7 @@ class GtpConnection():
             self.respond("unknown")
             return False
         else:
-            self.respond("Draw")
-            return True
-        return False
-    
-    def play(self,point,color):
-        assert self.board.is_black_white(color)
-        if self.board.board[point] == 0:
-            self.board.board[point] = color
+            self.respond("draw")
             return True
         return False
     
@@ -421,37 +408,34 @@ class GtpConnection():
             board_move = args[1]
             color = color_to_int(board_color)
             coord = move_to_coord(args[1], self.board.size)
+
             if coord:
                 move = coord_to_point(coord[0],coord[1], self.board.size)
             else:
-                self.error("Error executing move {} converted from {}"
-                           .format(move, args[1]))
+                self.respond("illegal move: "+"\""+args[1].lower()+"\" wrong coordinate")
                 return
             if(self.checkEmpty()):
                 if(self.checkRow()):
-                    self.respond("Illegal Move: {}".format(board_move))
+                    self.respond("Illegal Move")
+                    return
                 elif(self.checkCol()):
-                    self.respond("Illegal Move: {}".format(board_move))
+                    self.respond("Illegal Move")
+                    return
                 elif(self.checkDouble()):
-                    self.respond("Illegal Move: {}".format(board_move))
+                    self.respond("Illegal Move")
+                    return
                 else:
-                    self.board.play_move(move,color)
-                    self.debug_msg("Move: {}\nBoard:\n{}\n".
-                            format(board_move, self.board2d()))
+                    if not self.board.play_move(move,color):
+                        self.respond("illegal move: "+"\""+args[1].lower()+"\" occupied")
+                        return
                 
             else:
-                self.respond("Illegal Move: {}".format(board_move))
-            '''
-            if not self.board.play_move(move,color):
-                self.respond("Illegal Move: {}".format(board_move))
+                self.respond("Illegal Move")
                 return
-            else:
-                self.debug_msg("Move: {}\nBoard:\n{}\n".
-                                format(board_move, self.board2d()))
-            '''
             self.respond()
         except Exception as e:
-            self.respond('Error: {}'.format(str(e)))
+            self.respond("illegal move: "+"\""+board_color.lower()+"\" wrong color")
+            #self.respond('Error: {}'.format(str(e)))
 
     def genmove_cmd(self, args):
         """ Modify this function for Assignment 1 """
@@ -475,7 +459,7 @@ class GtpConnection():
                     coords = point_to_coord(move, self.board.size)
                     gtp_moves.append(format_point(coords))
                 self.respond(gtp_moves[0])
-                self.play(moves[0], color)
+                self.board.play_move(moves[0],color)
             
         else:
             self.respond("pass")
@@ -573,9 +557,11 @@ def move_to_coord(point_str, board_size):
         if row < 1:
             raise ValueError
     except (IndexError, ValueError):
-        raise ValueError("invalid point: '{}'".format(s))
+        return
+        #raise ValueError("illegal move: '{}' wrong coordinate".format(s))
     if not (col <= board_size and row <= board_size):
-        raise ValueError("point off board: '{}'".format(s))
+        return
+        #raise ValueError("illegal move: '{}' wrong coordinate".format(s))#"point off board: '{}'".format(s))
     return row, col
 
 def color_to_int(c):
