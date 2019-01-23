@@ -1,15 +1,15 @@
 boardsize 7
 clear_board
 play B E1
-00 play W E1
+0 play W E1
 #? [illegal move: "e1" occupied]
 
 clear_board
-10 play Q A1
+1 play Q A1
 #? [illegal move: "q" wrong color]
 
-20 play B A8
-#? [illegal move: "a10" wrong]
+2 play B A8
+#? [illegal move: "a8" wrong coordinate]
 
 clear_board
 play B A1
@@ -25,10 +25,10 @@ play W E1
 play B A6
 play W E2
 play B A5
-30 gogui-rules_final_result
+3 gogui-rules_final_result
 #? [black]
 
-190 genmove w
+4 genmove w
 #? [resign]
 
 clear_board
@@ -41,7 +41,7 @@ play W A3
 play B D1
 play W A2
 play B E1
-40 gogui-rules_final_result
+5 gogui-rules_final_result
 #? [black]
 
 clear_board
@@ -54,7 +54,7 @@ play W G5
 play B B6
 play W G7
 play B A7
-50 gogui-rules_final_result
+6 gogui-rules_final_result
 #? [black]
 
 clear_board
@@ -67,7 +67,7 @@ play W A5
 play B E5
 play W A4
 play B F6
-60 gogui-rules_final_result
+7 gogui-rules_final_result
 #? [black]
 
 clear_board
@@ -81,7 +81,7 @@ play B D5
 play W E4
 play B E7
 play W E6
-70 gogui-rules_final_result
+8 gogui-rules_final_result
 #? [white]
 
 clear_board
@@ -95,7 +95,7 @@ play B A4
 play W G4
 play B B4
 play W F4
-80 gogui-rules_final_result
+9 gogui-rules_final_result
 #? [white]
 
 clear_board
@@ -109,7 +109,7 @@ play B F3
 play W B4
 play B F4
 play W A5
-90 gogui-rules_final_result
+10 gogui-rules_final_result
 #? [white]
 
 clear_board
@@ -118,7 +118,7 @@ play W A3
 play B A2
 play W B4
 play B A4
-100 gogui-rules_final_result
+11 gogui-rules_final_result
 #? [unknown]
 
 play W C5
@@ -126,7 +126,7 @@ play B E2
 play W D6
 play B E3
 play W E7
-110 gogui-rules_final_result
+12 gogui-rules_final_result
 #? [white]
 
 clear_board
@@ -176,25 +176,25 @@ play B B4
 play W A6
 play B B3
 play W B6
-120 gogui-rules_legal_moves
+13 gogui-rules_legal_moves
 #? [a3 a5 a3]
 play B A5
 play W C3
-130 gogui-rules_legal_moves
+14 gogui-rules_legal_moves
 #? [a3]
 
-140 genmove b
+15 genmove b
 #? [a3]
 
-150 gogui-rules_legal_moves
+16 gogui-rules_legal_moves
 #? []
 
-160 gogui-rules_final_result
+17 gogui-rules_final_result
 #? [draw]
 
-170 genmove w
+18 genmove w
 #? [pass]
 
-180 genmove b
+19 genmove b
 #? [pass]
 
