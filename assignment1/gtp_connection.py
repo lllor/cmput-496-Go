@@ -201,23 +201,32 @@ class GtpConnection():
 
     def gogui_rules_legal_moves_cmd(self, args):
         """ Implement this function for Assignment 1 """
-        if(self.gogui_rules_final_result_cmd(0)):
-            self.respond([])
+        #if(self.gogui_rules_final_result_cmd(0)):
+            #self.respond([])
             #print("error")
+            #return
+        if(self.checkRow()):
+            self.respond([])
             return
-        
-        #moves = GoBoardUtil.generate_legal_moves(self.board, 0)
-        moves = self.board.get_empty_points()
-        gtp_moves = []
-        for move in moves:
-            coords = point_to_coord(move, self.board.size)
-            gtp_moves.append(format_point(coords))
-        sorted_moves = ' '.join(sorted(gtp_moves))
-        self.respond(sorted_moves)
-
-        
-        #self.respond()
-        return
+        elif(self.checkCol()):
+            self.respond([])
+            return
+        elif(self.checkDouble()):
+            self.respond([])
+            return
+        elif(self.checkEmpty()):
+            #moves = GoBoardUtil.generate_legal_moves(self.board, 0)
+            moves = self.board.get_empty_points()
+            gtp_moves = []
+            for move in moves:
+                coords = point_to_coord(move, self.board.size)
+                gtp_moves.append(format_point(coords))
+            #sorted_moves = ' '.join(sorted(gtp_moves))
+            self.respond(gtp_moves)#self.respond()
+            return
+        else:
+            self.respond([])
+            return
 
     def gogui_rules_side_to_move_cmd(self, args):
         """ We already implemented this function for Assignment 1 """
@@ -436,30 +445,30 @@ class GtpConnection():
         """ generate a move for color args[0] in {'b','w'} """
         board_color = args[0].lower()
         color = color_to_int(board_color)
+        if(args[0] == 'b'): opponent = 'white'
+        else: player = "black"
+        
         #move = self.go_engine.get_move(self.board, color)
         if(self.checkEmpty()):
+            if(self.checkRow() == opponent):
+                self.respond("resign")
+            elif(self.checkCol() == opponent):
+                self.respond("resign")
+            elif(self.checkDouble() == opponent):
+                self.respond("resign")
+            else:
+                moves = self.board.get_empty_points()
+                gtp_moves = []
+                for move in moves:
+                    coords = point_to_coord(move, self.board.size)
+                    gtp_moves.append(format_point(coords))
+                self.respond(gtp_moves[0])
+                self.play(moves[0], color)
             
-            moves = self.board.get_empty_points()
-            gtp_moves = []
-            for move in moves:
-                coords = point_to_coord(move, self.board.size)
-                gtp_moves.append(format_point(coords))
-            #sorted_moves = ' '.join(sorted(gtp_moves))
-            self.respond(gtp_moves[0])
         else:
             self.respond([])
             self.respond("pass")
         
-        
-        
-        
-       # move_coord = point_to_coord(move, self.board.size)
-       # move_as_string = format_point(move_coord)
-       # if self.board.is_legal(move, color):
-       #     self.play(move, color)
-       #     self.respond(move_as_string)
-       # else:
-       #     self.respond("Illegal move: {}".format(move_as_string))
 
     """
     ==========================================================================
