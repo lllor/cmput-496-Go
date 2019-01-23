@@ -446,9 +446,8 @@ class GtpConnection():
         board_color = args[0].lower()
         color = color_to_int(board_color)
         if(args[0] == 'b'): opponent = 'white'
-        else: player = "black"
+        else: opponent = "black"
         
-        #move = self.go_engine.get_move(self.board, color)
         if(self.checkEmpty()):
             if(self.checkRow() == opponent):
                 self.respond("resign")
@@ -466,7 +465,7 @@ class GtpConnection():
                 self.play(moves[0], color)
             
         else:
-            self.respond([])
+            #self.respond([])
             self.respond("pass")
         
 
