@@ -167,6 +167,15 @@ class SimpleGoBoard(object):
         """
         assert is_black_white(color)
         # Special cases
+        
+        if self.board[point] == EMPTY:
+            self.board[point] = color
+            self.current_player = GoBoardUtil.opponent(color)
+            return True
+        #self.current_player = GoBoardUtil.opponent(color)
+        #self.current_player = GoBoardUtil.opponent(color)
+        return False
+        '''
         if point == PASS:
             self.ko_recapture = None
             self.current_player = GoBoardUtil.opponent(color)
@@ -196,6 +205,7 @@ class SimpleGoBoard(object):
             self.ko_recapture = single_captures[0]
         self.current_player = GoBoardUtil.opponent(color)
         return True
+        '''
 
     def neighbors_of_color(self, point, color):
         """ List of neighbors of point of given color """
