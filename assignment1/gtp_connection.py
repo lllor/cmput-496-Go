@@ -221,7 +221,7 @@ class GtpConnection():
             for move in moves:
                 coords = point_to_coord(move, self.board.size)
                 gtp_moves.append(format_point(coords))
-            sorted_moves = ' '.join(sorted(gtp_moves))
+            sorted_moves = ' '.join(sorted(gtp_moves,key = lambda x:(x[0],int(x[1:]))))
             self.respond(sorted_moves)#self.respond()
             return
         else:
@@ -416,13 +416,13 @@ class GtpConnection():
                 return
             if(self.checkEmpty()):
                 if(self.checkRow()):
-                    self.respond("illegal Move")
+                    self.respond("illegal move: "+"\""+args[1].lower()+"\"")
                     return
                 elif(self.checkCol()):
-                    self.respond("illegal Move")
+                    self.respond("illegal move: "+"\""+args[1].lower()+"\"")
                     return
                 elif(self.checkDouble()):
-                    self.respond("illegal Move")
+                    self.respond("illegal move: "+"\""+args[1].lower()+"\"")
                     return
                 else:
                     if not self.board.play_move(move,color):
@@ -430,7 +430,7 @@ class GtpConnection():
                         return
                 
             else:
-                self.respond("illegal Move")
+                self.respond("illegal move: "+"\""+args[1].lower()+"\"")
                 return
             self.respond()
         except Exception as e:
