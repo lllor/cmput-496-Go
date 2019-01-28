@@ -317,7 +317,6 @@ class GtpConnection():
                     return 'black'
                 elif (white >= 5):
                     #self.respond("White")
-                    print(12)
                     return 'white'
         return
         
