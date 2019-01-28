@@ -1,19 +1,21 @@
-'''
-Note: when demo for assignment1
-in case of invalid python3 path in different machine
-please call this with python3 when using gogui-regress
-example: /Users/jialinxie/Documents/gogui/bin/gogui-regress 'python3 Go0.py' assignment1-public-tests.gtp
-
-This project is witen by:
-Jialin Xie    | 1465931    | jialin
-Lanfang Zhang | 1519206    | lanfang1
-'''
-
 #!/usr/bin/python3
 #/usr/local/bin/python3
 # Set the path to your python3 above
 # Set up relative path for util
 # sys.path[0] is the directory of the current program
+
+#
+'''
+Note: when demo for assignment1
+in case of invalid python3 path in different machine
+please call this with python3 when using gogui-regress
+example: (on lab machine)
+/cshome/jialin/gogui/bin/gogui-regress 'python3 Go0.py' assignment1-public-tests.gtp
+
+This project is witen by:
+Jialin Xie    | 1465931    | jialin
+Lanfang Zhang | 1519206    | lanfang1
+'''
 import sys
 utilpath = sys.path[0] + "/../util/"
 sys.path.append(utilpath)
