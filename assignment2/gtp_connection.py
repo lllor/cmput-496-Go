@@ -12,6 +12,7 @@ from board_util import GoBoardUtil, BLACK, WHITE, EMPTY, BORDER, PASS, \
                        MAXSIZE, coord_to_point
 import numpy as np
 import re
+import signal
 
 class GtpConnection():
 
@@ -29,6 +30,12 @@ class GtpConnection():
         self._debug_mode = debug_mode
         self.go_engine = go_engine
         self.board = board
+
+        #defualt timelimit to 1
+        self._timelimit = 1
+        #defualt toPlay to black
+        self._toPlay = 'b'
+
         self.commands = {
             "protocol_version": self.protocol_version_cmd,
             "quit": self.quit_cmd,
@@ -49,7 +56,9 @@ class GtpConnection():
             "gogui-rules_side_to_move": self.gogui_rules_side_to_move_cmd,
             "gogui-rules_board": self.gogui_rules_board_cmd,
             "gogui-rules_final_result": self.gogui_rules_final_result_cmd,
-            "gogui-analyze_commands": self.gogui_analyze_cmd
+            "gogui-analyze_commands": self.gogui_analyze_cmd,
+            "timelimit": self.settimelimit,
+            "solve": self.solve
         }
 
         # used for argument checking
@@ -222,6 +231,12 @@ class GtpConnection():
             if board_color != "b" and board_color !="w":
                 self.respond("illegal move: \"{}\" wrong color".format(board_color))
                 return
+
+            if board_color = "b" :
+                self._toPlay = "w"
+            else:
+                self._toPlay = "b"
+
             color = color_to_int(board_color)
             if args[1].lower() == 'pass':
                 self.board.play_move(PASS, color)
@@ -245,30 +260,64 @@ class GtpConnection():
         except Exception as e:
             self.respond('{}'.format(str(e)))
 
+    def handler(signum, frame):
+        raise TimeoutException
+
+    def settimelimit(self, args):
+        # _timelimit is an integer in the range 1 <= seconds <= 100
+        self._timelimit = int(args[0])
+        self.respond()
+        return
+
+    def solve(self):
+        signal.signal(signal.SIGALRM, handler)
+        signal.alarm(self._timelimit)
+        try:
+            #solve
+
+
+
+        except:
+            self.respond('{}'.format("unknown"))
+
+        signal.alarm(0)
+        return
+
     def genmove_cmd(self, args):
         """
         Generate a move for the color args[0] in {'b', 'w'}, for the game of gomoku.
         """
-        board_color = args[0].lower()
-        color = color_to_int(board_color)
-        game_end, winner = self.board.check_game_end_gomoku()
-        if game_end:
-            if winner == color:
+        signal.signal(signal.SIGALRM, handler)
+        signal.alarm(self._timelimit)
+        # please note, call signal.alarm(0) to disable the alarm before you call return
+        try:
+            board_color = args[0].lower()
+            color = color_to_int(board_color)
+            game_end, winner = self.board.check_game_end_gomoku()
+            if game_end:
+                if winner == color:
+                    self.respond("pass")
+                else:
+                    self.respond("resign")
+                signal.alarm(0)
+                return
+            move = self.go_engine.get_move(self.board, color)
+            if move == PASS:
                 self.respond("pass")
+                signal.alarm(0)
+                return
+            move_coord = point_to_coord(move, self.board.size)
+            move_as_string = format_point(move_coord)
+            if self.board.is_legal_gomoku(move, color):
+                self.board.play_move_gomoku(move, color)
+                self.respond(move_as_string)
             else:
-                self.respond("resign")
-            return
-        move = self.go_engine.get_move(self.board, color)
-        if move == PASS:
-            self.respond("pass")
-            return
-        move_coord = point_to_coord(move, self.board.size)
-        move_as_string = format_point(move_coord)
-        if self.board.is_legal_gomoku(move, color):
-            self.board.play_move_gomoku(move, color)
-            self.respond(move_as_string)
-        else:
-            self.respond("illegal move: {}".format(move_as_string))
+                self.respond("illegal move: {}".format(move_as_string))
+        except:
+            pass
+
+        signal.alarm(0)
+        return
 
     def gogui_rules_game_id_cmd(self, args):
         self.respond("Gomoku")
