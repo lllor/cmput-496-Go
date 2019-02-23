@@ -278,42 +278,52 @@ class GtpConnection():
         self.respond()
         return
     def negamaxBoolen(self,board,Time,score,counter):
+        
         alreadyPassed = (time.clock()-Time)
         self.board = board
         move_played = [0,self._toPlay]
 
         #if (len(GoBoardUtil.generate_legal_moves_gomoku(self.board))) == 0:
         #    return -1
-        if (self.board.check_game_end_gomoku()):
+        game_end,winner = self.board.check_game_end_gomoku()
+        if (game_end):#gameend, current player lose.return -1
             self.return_move = move_played
+            print("winner is: "+ str(winner))
             return -1
 
         moves = GoBoardUtil.generate_legal_moves_gomoku(self.board)
-        #if (len(moves) == 0):
-        #    return -50
+        #print(moves)
+        #print(len(moves))
+        if (len(moves) == 0):#no more moves, draw
+            print("full")
+            return -50
         
         gtp_moves = []
         for move in moves:
             coords = point_to_coord(move, self.board.size)
             gtp_moves.append(format_point(coords))
         sorted_moves = ' '.join(sorted(gtp_moves))
-
-
+        #print(sorted_moves)
+        sorted_moves = sorted_moves.split(' ')
+        
         best = -100
 
         while (alreadyPassed < self._timelimit):
-            for m in moves:
+            for m in sorted_moves:
                 counter+=1
-
                 move_played = [m,self._toPlay]
                 self.state_his.append([m,self._toPlay])
+                #elf.commands["play"]([self._toPlay,m])
+                #print(self._toPlay)
+                #print(m)
+                self.play_cmd([self._toPlay,m])
                 value = -self.negamaxBoolen(self.board,Time,score,counter)
-
                 if(value > best):
                     best = value
                     self.win_startegy = self.state_his
                     if(counter == 1):
                         self.return_move = move_played
+                #return 2
             return 1
 
 
@@ -498,6 +508,7 @@ def move_to_coord(point_str, board_size):
     to a pair of coordinates (row, col) in range 1 .. board_size.
     Raises ValueError if point_str is invalid
     """
+    #print()
     if not 2 <= board_size <= MAXSIZE:
         raise ValueError("board_size out of range")
     s = point_str.lower()
@@ -514,9 +525,9 @@ def move_to_coord(point_str, board_size):
         if row < 1:
             raise ValueError
     except (IndexError, ValueError):
-        raise ValueError("illegal move: \"{}\" wrong coordinate".format(s))
+        raise ValueError("illegal move: \"{}\" wrong coordinate1".format(s))
     if not (col <= board_size and row <= board_size):
-        raise ValueError("illegal move: \"{}\" wrong coordinate".format(s))
+        raise ValueError("illegal move: \"{}\" wrong coordinate2".format(s))
     return row, col
 
 def color_to_int(c):
