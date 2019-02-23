@@ -12,6 +12,7 @@ from board_util import GoBoardUtil, BLACK, WHITE, EMPTY, BORDER, PASS, \
                        MAXSIZE, coord_to_point
 import numpy as np
 import re
+import time
 import signal
 
 class GtpConnection():
@@ -35,7 +36,12 @@ class GtpConnection():
         self._timelimit = 1
         #defualt toPlay to black
         self._toPlay = 'b'
-
+        self._opponent = 'w'
+#============================================================        
+        self.return_move=[]
+        self.win_startegy=[]
+        self.state_his= []
+#============================================================
         self.commands = {
             "protocol_version": self.protocol_version_cmd,
             "quit": self.quit_cmd,
@@ -175,7 +181,6 @@ class GtpConnection():
     def clear_board_cmd(self, args):
         """ clear the board """
         self.reset(self.board.size)
-        self._toPlay = "b"
         self.respond()
 
     def boardsize_cmd(self, args):
@@ -183,7 +188,6 @@ class GtpConnection():
         Reset the game with new boardsize args[0]
         """
         self.reset(int(args[0]))
-        self._toPlay = 'b'
         self.respond()
 
     def showboard_cmd(self, args):
@@ -234,10 +238,12 @@ class GtpConnection():
                 self.respond("illegal move: \"{}\" wrong color".format(board_color))
                 return
 
-            if board_color = "b" :
+            if board_color == "b" :
                 self._toPlay = "w"
+                self._opponent = "b"
             else:
-                self._toPlay = "b"
+                self._toPlay == "b"
+                self._opponent="w"
 
             color = color_to_int(board_color)
             if args[1].lower() == 'pass':
@@ -265,33 +271,89 @@ class GtpConnection():
     def handler(signum, frame):
         raise TimeoutException
 
+#=============================================================================================================
     def settimelimit(self, args):
         # _timelimit is an integer in the range 1 <= seconds <= 100
         self._timelimit = int(args[0])
         self.respond()
         return
+    def negamaxBoolen(self,board,Time,score,counter):
+        alreadyPassed = (time.clock()-Time)
+        self.board = board
+        move_played = [0,self._toPlay]
 
-    def solve(self):
-        signal.signal(signal.SIGALRM, handler)
-        signal.alarm(self._timelimit)
-        try:
-            color = self._toPlay
-            game_end, winner = self.board.check_game_end_gomoku()
-            if game_end:
-                if winner == 1:
-                   self.respond('{}'.format("b"))
-                else:
-                   self.respond('{}'.format("w"))
+        #if (len(GoBoardUtil.generate_legal_moves_gomoku(self.board))) == 0:
+        #    return -1
+        if (self.board.check_game_end_gomoku()):
+            self.return_move = move_played
+            return -1
+
+        moves = GoBoardUtil.generate_legal_moves_gomoku(self.board)
+        #if (len(moves) == 0):
+        #    return -50
+        
+        gtp_moves = []
+        for move in moves:
+            coords = point_to_coord(move, self.board.size)
+            gtp_moves.append(format_point(coords))
+        sorted_moves = ' '.join(sorted(gtp_moves))
+
+
+        best = -100
+
+        while (alreadyPassed < self._timelimit):
+            for m in moves:
+                counter+=1
+
+                move_played = [m,self._toPlay]
+                self.state_his.append([m,self._toPlay])
+                value = -self.negamaxBoolen(self.board,Time,score,counter)
+
+                if(value > best):
+                    best = value
+                    self.win_startegy = self.state_his
+                    if(counter == 1):
+                        self.return_move = move_played
+            return 1
+
+
+
+    def solve(self,args):
+        #signal.signal(signal.SIGALRM, self.handler)
+        #signal.alarm(self._timelimit)
+        copy_board = self.board.copy()
+        start_time = time.clock()
+
+        #try:
+            #print("In solve")
 
 
 
 
-        except:
-            self.respond('{}'.format("unknown"))
+        is_win = self.negamaxBoolen(self.board,start_time,0,0)
+        self.board = copy_board
 
-        signal.alarm(0)
+        if (is_win == 1):
+            best_move = self.return_move
+            
+            self.win_startegy = []
+            self.state_his = []
+            #self.respond(best_move)
+            self.respond(self._toPlay+"win")
+        elif (is_win == -1):
+            self.respond(self._opponent+"win")
+        else:
+            self.respond("unknown")
+
+
+        
+
+        #except:
+        #    self.respond('{}'.format("unknown1"))
+#
+        #signal.alarm(0)
         return
-
+#=============================================================================================================
     def genmove_cmd(self, args):
         """
         Generate a move for the color args[0] in {'b', 'w'}, for the game of gomoku.
