@@ -175,6 +175,7 @@ class GtpConnection():
     def clear_board_cmd(self, args):
         """ clear the board """
         self.reset(self.board.size)
+        self._toPlay = "b"
         self.respond()
 
     def boardsize_cmd(self, args):
@@ -182,6 +183,7 @@ class GtpConnection():
         Reset the game with new boardsize args[0]
         """
         self.reset(int(args[0]))
+        self._toPlay = 'b'
         self.respond()
 
     def showboard_cmd(self, args):
@@ -273,7 +275,14 @@ class GtpConnection():
         signal.signal(signal.SIGALRM, handler)
         signal.alarm(self._timelimit)
         try:
-            #solve
+            color = self._toPlay
+            game_end, winner = self.board.check_game_end_gomoku()
+            if game_end:
+                if winner == 1:
+                   self.respond('{}'.format("b"))
+                else:
+                   self.respond('{}'.format("w"))
+
 
 
 
