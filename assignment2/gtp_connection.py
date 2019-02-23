@@ -289,9 +289,49 @@ class GtpConnection():
         print(sortedList)
         return sortedList
 
-    def winpattern(color):
+    def immediateWin(self, color, ifop):
+        return
+
+    def winInTwoMoves():
+        return
+
+    def twoIntersection():
+        return
+
+    def winpattern(self, color):
         #https://webdocs.cs.ualberta.ca/~mmueller/courses/496-current/assignments/a2-more-preview.txt
-        pass
+        # 1. immediate win:
+        # 2. block opponent's immediate win:
+        # 2b. Give up when opponent has double threats
+        # 3. win in 2 moves
+        # 3b. Give up when opponent has double threats
+        # 4. intersection of two promising patterns
+        immedWin = self.immediateWin(color, False)
+        if immedWin:
+            self.respond('{}'.format())
+            return
+
+        opponent = 3 - color
+        opimmedWin = self.immediateWin(opponent, True)
+        if opimmedWin:
+            self.respond('{}'.format())
+            return
+
+        winInTwo = self.winInTwoMoves(color)
+        if winInTwo:
+            self.respond('{}'.format())
+            return
+
+        opWinInTwo = self.winInTwoMoves(opponent)
+        if opWinInTwo:
+            self.respond('{}'.format())
+            return
+
+        intersection = self.twoIntersection(color)
+        if intersection:
+            self.respond('{}'.format())
+            return
+
     def solve(self, args):
         signal.signal(signal.SIGALRM, self.handler)
         signal.alarm(self._timelimit)
@@ -310,11 +350,7 @@ class GtpConnection():
                     self.respond('{}'.format("draw"))
 
             else:
-                if self.winpattern(color):
-                    pass
-                else:
-                    self.winpattern(opponent)
-
+                self.winpattern(color)
 
         except:
             self.respond('{}'.format("unknown"))
