@@ -278,7 +278,7 @@ class GtpConnection():
         color = self._toPlay
         moves = GoBoardUtil.generate_legal_moves_gomoku(self.board)
         for each in moves:
-            nbs = self.board.neighbors_of_color(each, color)
+            nbs = self.board.neighbors_of_color(each, 1)
             
             dp[len(nbs)].append(each)
 
@@ -286,35 +286,61 @@ class GtpConnection():
             singledp = dp.pop()
             for ea in singledp:
                 sortedList.append(ea)
-        print(sortedList)
+                #print(self.board._point_to_coord(ea))
         return sortedList
 
-    def immediateWin(self, color, ifop):
+    def checkrow(self, moves, color):
+        size = self.board.size
+        board = GoBoardUtil.get_twoD_board(self.board)
+
+        return
+    def checkcol(self, moves, color):
+        return
+    def checkdia(self, moves, color):
         return
 
+    def immediateWin(self, color):
+        moves = self.mysort()
+        board = self.board.copy()
+        self.showboard_cmd(1)
+        for move in moves:
+            self.board.play_move_gomoku(move, color)
+            game_end, winner = self.board.check_game_end_gomoku()
+            if game_end:
+                self.showboard_cmd(1)
+                return (True, move)
+            else:
+                self.board = board.copy()
+                self.showboard_cmd(1)
+        return (False, False)
+
     def winInTwoMoves():
+        self.checkrow(2, color)
+        self.checkcol(2, color)
+        self.checkdia(2, color)
         return
 
     def twoIntersection():
+
         return
 
     def winpattern(self, color):
-        #https://webdocs.cs.ualberta.ca/~mmueller/courses/496-current/assignments/a2-more-preview.txt
+        # https://webdocs.cs.ualberta.ca/~mmueller/courses/496-current/assignments/a2-more-preview.txt
         # 1. immediate win:
         # 2. block opponent's immediate win:
         # 2b. Give up when opponent has double threats
         # 3. win in 2 moves
         # 3b. Give up when opponent has double threats
         # 4. intersection of two promising patterns
-        immedWin = self.immediateWin(color, False)
-        if immedWin:
-            self.respond('{}'.format())
+        immedWin = self.immediateWin(color)
+        if immedWin[0]:
+            self.respond('{}'.format(1))
             return
 
         opponent = 3 - color
-        opimmedWin = self.immediateWin(opponent, True)
+        opimmedWin = self.immediateWin(opponent)
         if opimmedWin:
-            self.respond('{}'.format())
+            self.respond('{}'.format(2))
             return
 
         winInTwo = self.winInTwoMoves(color)
@@ -336,7 +362,6 @@ class GtpConnection():
         signal.signal(signal.SIGALRM, self.handler)
         signal.alarm(self._timelimit)
         try:
-            self.mysort()
             color = self._toPlay
             opponent = 3 - color
 
