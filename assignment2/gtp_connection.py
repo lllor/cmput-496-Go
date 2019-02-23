@@ -34,7 +34,7 @@ class GtpConnection():
         #defualt timelimit to 1
         self._timelimit = 1
         #defualt toPlay to black
-        self._toPlay = 'b'
+        self._toPlay = 1
 
         self.commands = {
             "protocol_version": self.protocol_version_cmd,
@@ -175,7 +175,7 @@ class GtpConnection():
     def clear_board_cmd(self, args):
         """ clear the board """
         self.reset(self.board.size)
-        self._toPlay = "b"
+        self._toPlay = 1
         self.respond()
 
     def boardsize_cmd(self, args):
@@ -183,7 +183,7 @@ class GtpConnection():
         Reset the game with new boardsize args[0]
         """
         self.reset(int(args[0]))
-        self._toPlay = 'b'
+        self._toPlay = 1
         self.respond()
 
     def showboard_cmd(self, args):
@@ -235,11 +235,9 @@ class GtpConnection():
                 return
 
             if board_color == "b" :
-                self._toPlay = "w"
-                print("w")
+                self._toPlay = 2
             else:
-                self._toPlay = "b"
-                print("b")
+                self._toPlay = 1
 
             color = color_to_int(board_color)
             if args[1].lower() == 'pass':
@@ -280,10 +278,10 @@ class GtpConnection():
         color = self._toPlay
         moves = GoBoardUtil.generate_legal_moves_gomoku(self.board)
         for each in moves:
-            nbs = self.board.neighbors_of_color(each, 1)
-            print(nbs)
+            nbs = self.board.neighbors_of_color(each, color)
+            
             dp[len(nbs)].append(each)
-        print(each,dp)
+
         for eachdp in range(9):
             singledp = dp.pop()
             for ea in singledp:
@@ -300,25 +298,22 @@ class GtpConnection():
         try:
             self.mysort()
             color = self._toPlay
-            if self._toPlay == "b":
-                opponent = "w"
+            opponent = 3 - color
+
+            game_end, winner = self.board.check_game_end_gomoku()
+            if game_end:
+                if winner == 1:
+                   self.respond('{}'.format("b"))
+                elif winner == 2:
+                   self.respond('{}'.format("w"))
+                else:
+                    self.respond('{}'.format("draw"))
+
             else:
-                opponent = "b"
-
-            # game_end, winner = self.board.check_game_end_gomoku()
-            # if game_end:
-            #     if winner == 1:
-            #        self.respond('{}'.format("b"))
-            #     elif winner == 2:
-            #        self.respond('{}'.format("w"))
-            #     else:
-            #         self.respond('{}'.format("draw"))
-
-            # else:
-            #     if self.winpattern(color):
-            #         pass
-            #     else:
-            #         self.winpattern(opponent)
+                if self.winpattern(color):
+                    pass
+                else:
+                    self.winpattern(opponent)
 
 
         except:
@@ -331,7 +326,7 @@ class GtpConnection():
         """
         Generate a move for the color args[0] in {'b', 'w'}, for the game of gomoku.
         """
-        signal.signal(signal.SIGALRM, handler)
+        signal.signal(signal.SIGALRM, self.handler)
         signal.alarm(self._timelimit)
         # please note, call signal.alarm(0) to disable the alarm before you call return
         try:
