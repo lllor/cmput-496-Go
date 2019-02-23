@@ -276,7 +276,23 @@ class GtpConnection():
 
     def handler(signum, frame):
         raise TimeoutException
+    def mysort(self):
+        sortedList = []
+        dp = [[],[],[],[],[],[],[],[],[]]
+              #0, 1, 2, 3, 4, 5, 6, 7,8
+        color = self._toPlay
+        moves = GoBoardUtil.generate_legal_moves_gomoku(self.board)
+        for each in moves:
+            nbs = self.board.neighbors_of_color(each, 1)
+            
+            dp[len(nbs)].append(each)
 
+        for eachdp in range(9):
+            singledp = dp.pop()
+            for ea in singledp:
+                sortedList.append(ea)
+        print(sortedList)
+        return sortedList
 #=============================================================================================================
     def settimelimit(self, args):
         # _timelimit is an integer in the range 1 <= seconds <= 100
@@ -308,7 +324,7 @@ class GtpConnection():
             #print("winner is: "+ str(winner))
             return -50
 
-        moves = GoBoardUtil.generate_legal_moves_gomoku(self.board)
+        moves = self.mysort()#GoBoardUtil.generate_legal_moves_gomoku(self.board)
         
         if (len(moves) == 0):#no more moves, draw
             #self.return_move = move_played
@@ -317,6 +333,7 @@ class GtpConnection():
         
         gtp_moves = []
         for move in moves:
+            print("here:", move)
             coords = point_to_coord(move, self.board.size)
             gtp_moves.append(format_point(coords))
         sorted_moves = ' '.join(sorted(gtp_moves))
