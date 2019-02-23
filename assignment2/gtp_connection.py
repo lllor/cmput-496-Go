@@ -234,10 +234,12 @@ class GtpConnection():
                 self.respond("illegal move: \"{}\" wrong color".format(board_color))
                 return
 
-            if board_color = "b" :
+            if board_color == "b" :
                 self._toPlay = "w"
+                print("w")
             else:
                 self._toPlay = "b"
+                print("b")
 
             color = color_to_int(board_color)
             if args[1].lower() == 'pass':
@@ -271,19 +273,52 @@ class GtpConnection():
         self.respond()
         return
 
-    def solve(self):
-        signal.signal(signal.SIGALRM, handler)
+    def mysort(self):
+        sortedList = []
+        dp = [[],[],[],[],[],[],[],[],[]]
+              #0, 1, 2, 3, 4, 5, 6, 7,8
+        color = self._toPlay
+        moves = GoBoardUtil.generate_legal_moves_gomoku(self.board)
+        for each in moves:
+            nbs = self.board.neighbors_of_color(each, 1)
+            print(nbs)
+            dp[len(nbs)].append(each)
+        print(each,dp)
+        for eachdp in range(9):
+            singledp = dp.pop()
+            for ea in singledp:
+                sortedList.append(ea)
+        print(sortedList)
+        return sortedList
+
+    def winpattern(color):
+        #https://webdocs.cs.ualberta.ca/~mmueller/courses/496-current/assignments/a2-more-preview.txt
+        pass
+    def solve(self, args):
+        signal.signal(signal.SIGALRM, self.handler)
         signal.alarm(self._timelimit)
         try:
+            self.mysort()
             color = self._toPlay
-            game_end, winner = self.board.check_game_end_gomoku()
-            if game_end:
-                if winner == 1:
-                   self.respond('{}'.format("b"))
-                else:
-                   self.respond('{}'.format("w"))
+            if self._toPlay == "b":
+                opponent = "w"
+            else:
+                opponent = "b"
 
+            # game_end, winner = self.board.check_game_end_gomoku()
+            # if game_end:
+            #     if winner == 1:
+            #        self.respond('{}'.format("b"))
+            #     elif winner == 2:
+            #        self.respond('{}'.format("w"))
+            #     else:
+            #         self.respond('{}'.format("draw"))
 
+            # else:
+            #     if self.winpattern(color):
+            #         pass
+            #     else:
+            #         self.winpattern(opponent)
 
 
         except:

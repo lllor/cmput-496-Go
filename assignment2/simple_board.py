@@ -304,7 +304,11 @@ class SimpleGoBoard(object):
         
     def _neighbors(self, point):
         """ List of all four neighbors of the point """
-        return [point - 1, point + 1, point - self.NS, point + self.NS]
+        return [point - 1, point + 1, point - self.NS, point + self.NS,
+                point - self.NS - 1, 
+                point - self.NS + 1, 
+                point + self.NS - 1, 
+                point + self.NS + 1]
 
     def _diag_neighbors(self, point):
         """ List of all four diagonal neighbors of point """
