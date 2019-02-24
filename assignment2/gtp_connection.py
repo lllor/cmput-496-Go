@@ -236,6 +236,7 @@ class GtpConnection():
         """
         try:
             board_color = args[0].lower()
+            #print(board_color)
             board_move = args[1]
             if board_color != "b" and board_color !="w":
                 self.respond("illegal move: \"{}\" wrong color".format(board_color))
@@ -243,10 +244,9 @@ class GtpConnection():
 
             if board_color == "b" :
                 self._toPlay = "w"
-                #self._opponent = "b"
             else:
-                self._toPlay == "b"
-                #self._opponent="w"
+                self._toPlay = "b"
+            
 
             color = color_to_int(board_color)
             if args[1].lower() == 'pass':
@@ -289,7 +289,7 @@ class GtpConnection():
         
         alreadyPassed = (time.clock()-Time)
         self.board = board
-        move_played = [0,self._toPlay]
+        move_played = ["0",self._toPlay]
 
         #if (len(GoBoardUtil.generate_legal_moves_gomoku(self.board))) == 0:
         #    return -1
@@ -299,7 +299,7 @@ class GtpConnection():
         if (game_end):#gameend, current player lose.return -1
             self.return_move = move_played
             print("winner is: "+ str(winner))
-            return -50
+            return -100
 
         moves = GoBoardUtil.generate_legal_moves_gomoku(self.board)
         
@@ -327,6 +327,7 @@ class GtpConnection():
                 #print(m)
                 self.play_cmd([self._toPlay,m])
                 value = -self.negamaxBoolen(self.board,Time,score,counter)
+                print(value)
                 if(value > best):
                     best = value
                     self.win_startegy = self.state_his
@@ -351,26 +352,47 @@ class GtpConnection():
 
         #try:
             #print("In solve")
-        print(self._toPlay)
+        #print(self._toPlay)
+        player = self._toPlay
 
 
-
-        #is_win = self.negamaxBoolen(self.board,start_time,0,0)
-        #self.board = copy_board
-
-#        if (is_win == 1):
-#            best_move = self.return_move
-#            
-#            self.win_startegy = []
-#            self.state_his = []
+        is_win = self.negamaxBoolen(self.board,start_time,0,0)
+        self._toPlay = player
+        self.board = copy_board
+       # print(is_win)
+        if (is_win == 100):
+            best_move = self.return_move
+            
+            self.win_startegy = []
+            self.state_his = []
+            if(self.return_move !=[] ):
+                self.respond(self._toPlay+" "+self.return_move[0])
+            else:
+                self.respond(self._toPlay)
             #self.respond(best_move)
-#            self.respond(self._toPlay+" win")
-#        elif (is_win == -1):
-#            self.respond("opp win")
-#        else:
-#            self.respond("draw")
+            #
+        elif (is_win == -100):
+            if(self._toPlay == "b"):
+                if(self.return_move[0] != "0" ):
+                    self.respond("w"+" "+self.return_move[0])
+                else:
+                    self.respond("w")
+            else:
+                if(self.return_move[0] != "0" ):
+                    self.respond("b"+" "+self.return_move[0])
+                else:
+                    self.respond("b")
+            #
+        else:
+            if(self.return_move[0] != "0" ):
+                self.respond("draw"+" "+self.return_move[0])
+            else:
+                self.respond("draw")
 
-
+        self.return_move = []
+        self.win_startegy = []
+        self.state_his = []
+        self.played_states = []
         
 
         #except:
