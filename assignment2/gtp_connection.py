@@ -12,8 +12,11 @@ from board_util import GoBoardUtil, BLACK, WHITE, EMPTY, BORDER, PASS, \
                        MAXSIZE, coord_to_point
 import numpy as np
 import re
+import copy
+import time
 import signal
-
+def handler(signum, frame):
+    raise Exception("end of time")
 class GtpConnection():
 
     def __init__(self, go_engine, board, debug_mode = False):
@@ -34,8 +37,16 @@ class GtpConnection():
         #defualt timelimit to 1
         self._timelimit = 1
         #defualt toPlay to black
-        self._toPlay = 1
-
+        self._toPlay = 'b'
+        self._opponent = 'w'
+#============================================================        
+        self.return_move=[]
+        self.win_startegy=[]
+        self.state_his= []
+        self.played_states=[]
+        self.neg_counter = 0
+        self.back_up= 0
+#============================================================
         self.commands = {
             "protocol_version": self.protocol_version_cmd,
             "quit": self.quit_cmd,
@@ -108,13 +119,13 @@ class GtpConnection():
         if self.has_arg_error(command_name, len(args)):
             return
         if command_name in self.commands:
-            try:
-                self.commands[command_name](args)
-            except Exception as e:
-                self.debug_msg("Error executing command {}\n".format(str(e)))
-                self.debug_msg("Stack Trace:\n{}\n".
-                               format(traceback.format_exc()))
-                raise e
+            #try:
+            self.commands[command_name](args)
+            #except Exception as e:
+            #    self.debug_msg("Error executing command {}\n".format(str(e)))
+            #    self.debug_msg("Stack Trace:\n{}\n".
+            #                   format(traceback.format_exc()))
+            #    raise e
         else:
             self.debug_msg("Unknown command: {}\n".format(command_name))
             self.error('Unknown command')
@@ -175,7 +186,7 @@ class GtpConnection():
     def clear_board_cmd(self, args):
         """ clear the board """
         self.reset(self.board.size)
-        self._toPlay = 1
+        self._toPlay = "b"
         self.respond()
 
     def boardsize_cmd(self, args):
@@ -183,7 +194,7 @@ class GtpConnection():
         Reset the game with new boardsize args[0]
         """
         self.reset(int(args[0]))
-        self._toPlay = 1
+        self._toPlay = "b"
         self.respond()
 
     def showboard_cmd(self, args):
@@ -229,15 +240,17 @@ class GtpConnection():
         """
         try:
             board_color = args[0].lower()
+            #print(board_color)
             board_move = args[1]
             if board_color != "b" and board_color !="w":
                 self.respond("illegal move: \"{}\" wrong color".format(board_color))
                 return
 
             if board_color == "b" :
-                self._toPlay = 2
+                self._toPlay = "w"
             else:
-                self._toPlay = 1
+                self._toPlay = "b"
+            
 
             color = color_to_int(board_color)
             if args[1].lower() == 'pass':
@@ -265,18 +278,42 @@ class GtpConnection():
     def handler(signum, frame):
         raise TimeoutException
 
+#=============================================================================================================
     def settimelimit(self, args):
         # _timelimit is an integer in the range 1 <= seconds <= 100
         self._timelimit = int(args[0])
         self.respond()
         return
-
-    def mysort(self):
+    def undoMove(self):
+        if(len(self.played_states)>0):
+            self.board = (copy.deepcopy(self.played_states[-1]))
+            self.played_states.pop(-1)
+           # print("current board:\n"+str(GoBoardUtil.get_twoD_board(self.board)))
+        if(self._toPlay == "b"):
+            self._toPlay = "w"
+        else:
+            self._toPlay = "b"
+    def long_neighbors(self,m):
+        """
+        precompute neighbor array.
+        For each point on the board, store its list of on-the-board neighbors
+        """
+        self.neighbors = [[],[],[],[],[]]
+        for point in range(self.maxpoint):
+            if self.board[point] == BORDER:
+                self.neighbors.append([])
+            else:
+                self.neighbors.append(self._on_board_neighbors(point))
+    def mysort(self,moves):
         sortedList = []
         dp = [[],[],[],[],[],[],[],[],[]]
               #0, 1, 2, 3, 4, 5, 6, 7,8
         color = self._toPlay
-        moves = GoBoardUtil.generate_legal_moves_gomoku(self.board)
+        if(color == "b"):
+            color = 1
+        else:
+            color = 2
+        #moves = GoBoardUtil.generate_legal_moves_gomoku(self.board)
         for each in moves:
             nbs = self.board.neighbors_of_color(each, color)
             
@@ -286,83 +323,104 @@ class GtpConnection():
             singledp = dp.pop()
             for ea in singledp:
                 sortedList.append(ea)
-        print(sortedList)
+        #print(sortedList)
         return sortedList
-
-    def immediateWin(self, color, ifop):
-        return
-
-    def winInTwoMoves():
-        return
-
-    def twoIntersection():
-        return
-
-    def winpattern(self, color):
-        #https://webdocs.cs.ualberta.ca/~mmueller/courses/496-current/assignments/a2-more-preview.txt
-        # 1. immediate win:
-        # 2. block opponent's immediate win:
-        # 2b. Give up when opponent has double threats
-        # 3. win in 2 moves
-        # 3b. Give up when opponent has double threats
-        # 4. intersection of two promising patterns
-        immedWin = self.immediateWin(color, False)
-        if immedWin:
-            self.respond('{}'.format())
-            return
-
-        opponent = 3 - color
-        opimmedWin = self.immediateWin(opponent, True)
-        if opimmedWin:
-            self.respond('{}'.format())
-            return
-
-        winInTwo = self.winInTwoMoves(color)
-        if winInTwo:
-            self.respond('{}'.format())
-            return
-
-        opWinInTwo = self.winInTwoMoves(opponent)
-        if opWinInTwo:
-            self.respond('{}'.format())
-            return
-
-        intersection = self.twoIntersection(color)
-        if intersection:
-            self.respond('{}'.format())
-            return
-
-    def solve(self, args):
-        signal.signal(signal.SIGALRM, self.handler)
-        signal.alarm(self._timelimit)
-        try:
-            self.mysort()
-            color = self._toPlay
-            opponent = 3 - color
-
-            game_end, winner = self.board.check_game_end_gomoku()
-            if game_end:
-                if winner == 1:
-                   self.respond('{}'.format("b"))
-                elif winner == 2:
-                   self.respond('{}'.format("w"))
-                else:
-                    self.respond('{}'.format("draw"))
-
+    def negamaxBoolean(self,board,depth,ProofTree,DrawTree):
+        self.board = board
+        
+        game_end,winner = self.board.check_game_end_gomoku()
+        
+        #print(winner)
+        if game_end:
+            if(winner == self._toPlay):
+                return 1
+            elif(winner == None):
+                return 0
             else:
-                self.winpattern(color)
+                return -1
+        
+        moves = GoBoardUtil.generate_legal_moves_gomoku(self.board)
+        #sort_moves = self.mysort(moves)
+       # print(moves)
+        gtp_moves = []
+        for move in moves:
+            coords = point_to_coord(move, self.board.size)
+            gtp_moves.append(format_point(coords))
+        sorted_moves = ' '.join(gtp_moves)
+        sorted_moves = sorted_moves.split(' ')
 
-        except:
-            self.respond('{}'.format("unknown"))
+        #print(sorted_moves)
+        for m in sorted_moves:
+            print(self._toPlay+m)
+            self.played_states.append(copy.deepcopy(self.board))
+            self.play_cmd([self._toPlay,m])
+            win = -self.negamaxBoolean(board,depth-1,ProofTree,DrawTree)
+            
+            self.undoMove()
+            if win == 1:
+                #print("the win"+m)
+                ProofTree.append(m)
+                return 1
+            if win == 0:
+                DrawTree.append(m)
+        print("end")
+        return -1
 
-        signal.alarm(0)
+    def solve(self,agrs):
+        back_up = self.board.copy()
+        # to_play = state.current_player
+        # Initialize proof tree and run negamax search starts with current player
+        #self._toPlay = "b"
+
+
+
+        proof_tree = [None]
+        draw_tree=[None]
+
+        try:
+            result = self.negamaxBoolean(self.board, 14, proof_tree,draw_tree)
+        except Exception as e:
+            # print(e)
+            print("error happend/time limie")
+            result = None
+        
+        
+
+        
+        proof_tree.reverse()
+        draw_tree.reverse()
+        # Convert result to current player
+        print(proof_tree)
+        #print(draw_tree)
+        if result == None:
+            return 'unknown', None
+        elif result == 1:
+            if proof_tree[0] == None:
+                proof_tree[0] = 'pass'
+                self.respond("draw")
+            else:
+                self.respond(self._toPlay+proof_tree[0])
+            #return GoBoardUtil.int_to_color(to_play), proof_tree[0]
+        else:
+            if draw_tree[0] != None:
+                #proof_tree[0] = 'pass'
+                self.respond("draw "+draw_tree[0])
+                return
+            #self.respond(GoBoardUtil.opponent(self._toPlay))
+            if(self._toPlay == "b"):
+                self.respond("w")
+            else:
+                self.respond("b")
+
+        proof_tree = []
         return
 
+#=============================================================================================================
     def genmove_cmd(self, args):
         """
         Generate a move for the color args[0] in {'b', 'w'}, for the game of gomoku.
         """
-        signal.signal(signal.SIGALRM, self.handler)
+        signal.signal(signal.SIGALRM, handler)
         signal.alarm(self._timelimit)
         # please note, call signal.alarm(0) to disable the alarm before you call return
         try:
@@ -502,6 +560,7 @@ def move_to_coord(point_str, board_size):
     to a pair of coordinates (row, col) in range 1 .. board_size.
     Raises ValueError if point_str is invalid
     """
+    #print()
     if not 2 <= board_size <= MAXSIZE:
         raise ValueError("board_size out of range")
     s = point_str.lower()
@@ -518,9 +577,9 @@ def move_to_coord(point_str, board_size):
         if row < 1:
             raise ValueError
     except (IndexError, ValueError):
-        raise ValueError("illegal move: \"{}\" wrong coordinate".format(s))
+        raise ValueError("illegal move: \"{}\" wrong coordinate1".format(s))
     if not (col <= board_size and row <= board_size):
-        raise ValueError("illegal move: \"{}\" wrong coordinate".format(s))
+        raise ValueError("illegal move: \"{}\" wrong coordinate2".format(s))
     return row, col
 
 def color_to_int(c):
@@ -528,3 +587,4 @@ def color_to_int(c):
     color_to_int = {"b": BLACK , "w": WHITE, "e": EMPTY, 
                     "BORDER": BORDER}
     return color_to_int[c] 
+#return str(GoBoardUtil.get_twoD_board(self.board))
