@@ -41,6 +41,7 @@ class GtpConnection():
         self.return_move=[]
         self.win_startegy=[]
         self.state_his= []
+        self.played_states=[]
 #============================================================
         self.commands = {
             "protocol_version": self.protocol_version_cmd,
@@ -181,6 +182,7 @@ class GtpConnection():
     def clear_board_cmd(self, args):
         """ clear the board """
         self.reset(self.board.size)
+        self._toPlay = "b"
         self.respond()
 
     def boardsize_cmd(self, args):
@@ -188,6 +190,7 @@ class GtpConnection():
         Reset the game with new boardsize args[0]
         """
         self.reset(int(args[0]))
+        self._toPlay = "b"
         self.respond()
 
     def showboard_cmd(self, args):
@@ -240,10 +243,10 @@ class GtpConnection():
 
             if board_color == "b" :
                 self._toPlay = "w"
-                self._opponent = "b"
+                #self._opponent = "b"
             else:
                 self._toPlay == "b"
-                self._opponent="w"
+                #self._opponent="w"
 
             color = color_to_int(board_color)
             if args[1].lower() == 'pass':
@@ -277,6 +280,11 @@ class GtpConnection():
         self._timelimit = int(args[0])
         self.respond()
         return
+
+    def undoMove(self):
+        self.board =self.played_states[-1]
+        self.played_states.pop(-1)
+
     def negamaxBoolen(self,board,Time,score,counter):
         
         alreadyPassed = (time.clock()-Time)
@@ -286,17 +294,18 @@ class GtpConnection():
         #if (len(GoBoardUtil.generate_legal_moves_gomoku(self.board))) == 0:
         #    return -1
         game_end,winner = self.board.check_game_end_gomoku()
+        #print(game_end)
+        self.showboard_cmd(move_played)
         if (game_end):#gameend, current player lose.return -1
             self.return_move = move_played
             print("winner is: "+ str(winner))
-            return -1
+            return -50
 
         moves = GoBoardUtil.generate_legal_moves_gomoku(self.board)
-        #print(moves)
-        #print(len(moves))
+        
         if (len(moves) == 0):#no more moves, draw
             print("full")
-            return -50
+            return -1
         
         gtp_moves = []
         for move in moves:
@@ -323,8 +332,14 @@ class GtpConnection():
                     self.win_startegy = self.state_his
                     if(counter == 1):
                         self.return_move = move_played
+                if (counter == 1):
+                    self.played_states.append(self.board)
+                
+                counter -= 1
+                self.undoMove()
+
                 #return 2
-            return 1
+            return best
 
 
 
@@ -336,24 +351,24 @@ class GtpConnection():
 
         #try:
             #print("In solve")
+        print(self._toPlay)
 
 
 
+        #is_win = self.negamaxBoolen(self.board,start_time,0,0)
+        #self.board = copy_board
 
-        is_win = self.negamaxBoolen(self.board,start_time,0,0)
-        self.board = copy_board
-
-        if (is_win == 1):
-            best_move = self.return_move
-            
-            self.win_startegy = []
-            self.state_his = []
+#        if (is_win == 1):
+#            best_move = self.return_move
+#            
+#            self.win_startegy = []
+#            self.state_his = []
             #self.respond(best_move)
-            self.respond(self._toPlay+"win")
-        elif (is_win == -1):
-            self.respond(self._opponent+"win")
-        else:
-            self.respond("unknown")
+#            self.respond(self._toPlay+" win")
+#        elif (is_win == -1):
+#            self.respond("opp win")
+#        else:
+#            self.respond("draw")
 
 
         
