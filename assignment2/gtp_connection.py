@@ -239,7 +239,7 @@ class GtpConnection():
         """
         try:
             board_color = args[0].lower()
-            print(board_color)
+            #print(board_color)
             board_move = args[1]
             if board_color != "b" and board_color !="w":
                 self.respond("illegal move: \"{}\" wrong color".format(board_color))
@@ -287,10 +287,10 @@ class GtpConnection():
         if(len(self.played_states)>0):
             self.board = (copy.deepcopy(self.played_states[-1]))
             self.played_states.pop(-1)
-            print("current board:\n"+str(GoBoardUtil.get_twoD_board(self.board)))
+           # print("current board:\n"+str(GoBoardUtil.get_twoD_board(self.board)))
 
         else:
-            print("reset failure")
+            #print("reset failure")
         if(self._toPlay == "b"):
             self._toPlay = "w"
         else:
@@ -305,17 +305,17 @@ class GtpConnection():
         
         game_end,winner = self.board.check_game_end_gomoku()
         #print(game_end)
-        self.showboard_cmd(move_played)
+        #self.showboard_cmd(move_played)
         if (game_end):#gameend, current player lose.return -1
             self.return_move = move_played
-            print("winner is: "+ str(winner))
+            #print("winner is: "+ str(winner))
             return -50
 
         moves = GoBoardUtil.generate_legal_moves_gomoku(self.board)
         
         if (len(moves) == 0):#no more moves, draw
-            self.return_move = move_played
-            print("full")
+            #self.return_move = move_played
+            #print("full")
             return -1
         
         gtp_moves = []
@@ -331,7 +331,7 @@ class GtpConnection():
             for m in sorted_moves:
                 self.neg_counter +=1
                 
-                
+                self.played_states.append(copy.deepcopy(self.board))
                 move_played = [m,self._toPlay]
                 self.state_his.append([m,self._toPlay])
                 self.play_cmd([self._toPlay,m])
@@ -343,8 +343,10 @@ class GtpConnection():
                     self.win_startegy = copy.deepcopy(self.state_his)
                     if(self.neg_counter == 1):
                         self.return_move = copy.deepcopy(move_played)
-                if (self.neg_counter==1):
-                    self.played_states.append(copy.deepcopy(self.board))
+                print(self.neg_counter)
+         #       self.showboard_cmd(0)
+                #if (self.neg_counter==1):
+                
                 
                 self.neg_counter -= 1
                 self.undoMove()
@@ -370,10 +372,10 @@ class GtpConnection():
             self.board = copy_board
             print("final value = "+str(is_win))
             
-            if (is_win == 100):
+            if (is_win == 50):
                 best_move = self.return_move
                 
-                if(self.return_move !=[] ):
+                if(self.return_move[0] !="0" ):
                     self.respond(self._toPlay+" "+self.return_move[0])
                 else:
                     self.respond(self._toPlay)
