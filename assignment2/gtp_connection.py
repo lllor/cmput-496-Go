@@ -12,6 +12,7 @@ from board_util import GoBoardUtil, BLACK, WHITE, EMPTY, BORDER, PASS, \
                        MAXSIZE, coord_to_point
 import numpy as np
 import re
+import copy
 import time
 import signal
 
@@ -42,6 +43,8 @@ class GtpConnection():
         self.win_startegy=[]
         self.state_his= []
         self.played_states=[]
+        self.neg_counter = 0
+        self.back_up= 0
 #============================================================
         self.commands = {
             "protocol_version": self.protocol_version_cmd,
@@ -115,13 +118,13 @@ class GtpConnection():
         if self.has_arg_error(command_name, len(args)):
             return
         if command_name in self.commands:
-            try:
-                self.commands[command_name](args)
-            except Exception as e:
-                self.debug_msg("Error executing command {}\n".format(str(e)))
-                self.debug_msg("Stack Trace:\n{}\n".
-                               format(traceback.format_exc()))
-                raise e
+            #try:
+            self.commands[command_name](args)
+            #except Exception as e:
+            #    self.debug_msg("Error executing command {}\n".format(str(e)))
+            #    self.debug_msg("Stack Trace:\n{}\n".
+            #                   format(traceback.format_exc()))
+            #    raise e
         else:
             self.debug_msg("Unknown command: {}\n".format(command_name))
             self.error('Unknown command')
@@ -236,7 +239,7 @@ class GtpConnection():
         """
         try:
             board_color = args[0].lower()
-            #print(board_color)
+            print(board_color)
             board_move = args[1]
             if board_color != "b" and board_color !="w":
                 self.respond("illegal move: \"{}\" wrong color".format(board_color))
@@ -280,30 +283,38 @@ class GtpConnection():
         self._timelimit = int(args[0])
         self.respond()
         return
-
     def undoMove(self):
-        self.board =self.played_states[-1]
-        self.played_states.pop(-1)
+        if(len(self.played_states)>0):
+            self.board = (copy.deepcopy(self.played_states[-1]))
+            self.played_states.pop(-1)
+            print("current board:\n"+str(GoBoardUtil.get_twoD_board(self.board)))
 
-    def negamaxBoolen(self,board,Time,score,counter):
+        else:
+            print("reset failure")
+        if(self._toPlay == "b"):
+            self._toPlay = "w"
+        else:
+            self._toPlay = "b"
+    
+    def negamaxBoolen(self,board,Time,score):
         
         alreadyPassed = (time.clock()-Time)
         self.board = board
         move_played = ["0",self._toPlay]
 
-        #if (len(GoBoardUtil.generate_legal_moves_gomoku(self.board))) == 0:
-        #    return -1
+        
         game_end,winner = self.board.check_game_end_gomoku()
         #print(game_end)
         self.showboard_cmd(move_played)
         if (game_end):#gameend, current player lose.return -1
             self.return_move = move_played
             print("winner is: "+ str(winner))
-            return -100
+            return -50
 
         moves = GoBoardUtil.generate_legal_moves_gomoku(self.board)
         
         if (len(moves) == 0):#no more moves, draw
+            self.return_move = move_played
             print("full")
             return -1
         
@@ -312,34 +323,32 @@ class GtpConnection():
             coords = point_to_coord(move, self.board.size)
             gtp_moves.append(format_point(coords))
         sorted_moves = ' '.join(sorted(gtp_moves))
-        #print(sorted_moves)
         sorted_moves = sorted_moves.split(' ')
         
         best = -100
 
         while (alreadyPassed < self._timelimit):
             for m in sorted_moves:
-                counter+=1
+                self.neg_counter +=1
+                
+                
                 move_played = [m,self._toPlay]
                 self.state_his.append([m,self._toPlay])
-                #elf.commands["play"]([self._toPlay,m])
-                #print(self._toPlay)
-                #print(m)
                 self.play_cmd([self._toPlay,m])
-                value = -self.negamaxBoolen(self.board,Time,score,counter)
-                print(value)
+                
+                value = -self.negamaxBoolen(self.board,Time,score)
+                
                 if(value > best):
                     best = value
-                    self.win_startegy = self.state_his
-                    if(counter == 1):
-                        self.return_move = move_played
-                if (counter == 1):
-                    self.played_states.append(self.board)
+                    self.win_startegy = copy.deepcopy(self.state_his)
+                    if(self.neg_counter == 1):
+                        self.return_move = copy.deepcopy(move_played)
+                if (self.neg_counter==1):
+                    self.played_states.append(copy.deepcopy(self.board))
                 
-                counter -= 1
+                self.neg_counter -= 1
                 self.undoMove()
-
-                #return 2
+                
             return best
 
 
@@ -348,55 +357,48 @@ class GtpConnection():
         #signal.signal(signal.SIGALRM, self.handler)
         #signal.alarm(self._timelimit)
         copy_board = self.board.copy()
+        self.back_up = copy.deepcopy(self.board)
         start_time = time.clock()
 
-        #try:
-            #print("In solve")
-        #print(self._toPlay)
-        player = self._toPlay
+        try:
+           
+            player = self._toPlay
 
-
-        is_win = self.negamaxBoolen(self.board,start_time,0,0)
-        self._toPlay = player
-        self.board = copy_board
-       # print(is_win)
-        if (is_win == 100):
-            best_move = self.return_move
+            is_win = self.negamaxBoolen(self.board,start_time,0)
             
+            self._toPlay = player
+            self.board = copy_board
+            print("final value = "+str(is_win))
+            
+            if (is_win == 100):
+                best_move = self.return_move
+                
+                if(self.return_move !=[] ):
+                    self.respond(self._toPlay+" "+self.return_move[0])
+                else:
+                    self.respond(self._toPlay)
+                #self.respond(best_move)
+                #
+            elif (is_win == -50):
+                if(self._toPlay == "b"):
+                        self.respond("w")
+                else:
+                        self.respond("b")
+                #
+            else:
+                if(self.return_move[0] != "0" ):
+                    self.respond("draw"+" "+self.return_move[0])
+                else:
+                    self.respond("draw")
+
+            self.return_move = []
             self.win_startegy = []
             self.state_his = []
-            if(self.return_move !=[] ):
-                self.respond(self._toPlay+" "+self.return_move[0])
-            else:
-                self.respond(self._toPlay)
-            #self.respond(best_move)
-            #
-        elif (is_win == -100):
-            if(self._toPlay == "b"):
-                if(self.return_move[0] != "0" ):
-                    self.respond("w"+" "+self.return_move[0])
-                else:
-                    self.respond("w")
-            else:
-                if(self.return_move[0] != "0" ):
-                    self.respond("b"+" "+self.return_move[0])
-                else:
-                    self.respond("b")
-            #
-        else:
-            if(self.return_move[0] != "0" ):
-                self.respond("draw"+" "+self.return_move[0])
-            else:
-                self.respond("draw")
-
-        self.return_move = []
-        self.win_startegy = []
-        self.state_his = []
-        self.played_states = []
+            self.played_states = []
         
 
-        #except:
-        #    self.respond('{}'.format("unknown1"))
+        except:
+            self.respond('{}'.format("unknown1"))
 #
         #signal.alarm(0)
         return
@@ -572,3 +574,4 @@ def color_to_int(c):
     color_to_int = {"b": BLACK , "w": WHITE, "e": EMPTY, 
                     "BORDER": BORDER}
     return color_to_int[c] 
+#return str(GoBoardUtil.get_twoD_board(self.board))
