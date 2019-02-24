@@ -303,16 +303,16 @@ class GtpConnection():
         moves = self.mysort()
         board = self.board.copy()
         self.showboard_cmd(1)
+        print(moves)
         for move in moves:
             self.board.play_move_gomoku(move, color)
             game_end, winner = self.board.check_game_end_gomoku()
+            self.board = board.copy()
+            print(game_end,winner)
             if game_end:
-                self.showboard_cmd(1)
                 return (True, move)
             else:
-                self.board = board.copy()
-                self.showboard_cmd(1)
-        return (False, False)
+                return (False, None)
 
     def winInTwoMoves():
         self.checkrow(2, color)
@@ -334,14 +334,29 @@ class GtpConnection():
         # 4. intersection of two promising patterns
         immedWin = self.immediateWin(color)
         if immedWin[0]:
-            self.respond('{}'.format(1))
+            if color == 1:
+                print(1)
+                #self.respond('{} {}'.format("b"),str(move))
+            else:
+                print(2)
+                #self.respond('{} {}'.format("w"),str(move))
             return
 
         opponent = 3 - color
         opimmedWin = self.immediateWin(opponent)
-        if opimmedWin:
-            self.respond('{}'.format(2))
-            return
+        if opimmedWin[0]:
+            board = self.board.copy()
+            self.board.play_move_gomoku(opimmedWin[1], color)
+            if self.immediateWin(opponent)[0]:
+                if color == 1:
+                    self.respond('{}'.format("w"))
+                else:
+                    self.respond('{}'.format("b"))
+                self.board = board.copy()
+                return
+            self.board = board.copy()
+            
+            
 
         winInTwo = self.winInTwoMoves(color)
         if winInTwo:
