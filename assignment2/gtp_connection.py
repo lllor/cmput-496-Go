@@ -288,9 +288,6 @@ class GtpConnection():
             self.board = (copy.deepcopy(self.played_states[-1]))
             self.played_states.pop(-1)
            # print("current board:\n"+str(GoBoardUtil.get_twoD_board(self.board)))
-
-        else:
-            #print("reset failure")
         if(self._toPlay == "b"):
             self._toPlay = "w"
         else:
