@@ -288,15 +288,63 @@ class GtpConnection():
                 #print(self.board._point_to_coord(ea))
         return sortedList
 
-    def checkrow(self, moves, color):
+    def checkrow(self):
+        color = self._toPlay
         size = self.board.size
         board = GoBoardUtil.get_twoD_board(self.board)
+        mem = None
+        for i in range(size):
+            count = 0
+            empty = 0
+            for j in range(size):
+                currentColor = board[i][j]
+                if currentColor == 0:
+                    empty+=1
+                elif currentColor == color:
+                    count+= 1
+                else:
+                    count = 0
+                    empty = 0
+
+                if count == 2:
+                    mem = (i+1,j-1)
+                if count >= 3:
+                    if count >=3:
+                        move_as_string = format_point(mem)
+                        return move_as_string
+        return None
+
+
 
         return
-    def checkcol(self, moves, color):
-        return
-    def checkdia(self, moves, color):
-        return
+    def checkcol(self):
+        color = self._toPlay
+        size = self.board.size
+        board = GoBoardUtil.get_twoD_board(self.board)
+        mem = None
+        for j in range(size):
+            count = 0
+            empty = 0
+            for i in range(size):
+                currentColor = board[i][j]
+                if currentColor == 0:
+                    empty+=1
+                elif currentColor == color:
+                    count+= 1
+                else:
+                    count = 0
+                    empty = 0
+
+                if count == 2:
+                    mem = (i-1,j+1)
+                if count >= 3:
+                    if count >=3:
+                        move_as_string = format_point(mem)
+                        return move_as_string
+        return None
+
+    # def checkdia(self, moves, color):
+    #     return
 
     def immediateWin(self, color):
         moves = self.mysort()
@@ -305,25 +353,34 @@ class GtpConnection():
 
         if len(moves) == 0:
             return ("draw", None)
-        
 
         for move in moves:
             self.board.play_move_gomoku(move, color)
             game_end, winner = self.board.check_game_end_gomoku()
             self.board = board.copy()
             if game_end:
-                return (True, move)
+                move_coord = point_to_coord(move, self.board.size)
+                move_as_string = format_point(move_coord)
+                return (True, move_as_string)
             else:
                 if (len(moves) == 1):
-                    return ("draw", move)
+                    move_coord = point_to_coord(move, self.board.size)
+                    move_as_string = format_point(move_coord)
+                    return ("draw", move_as_string)
                     
-                return (False, None)
+        return (False, None)
 
-    def winInTwoMoves():
-        self.checkrow(2, color)
-        self.checkcol(2, color)
-        self.checkdia(2, color)
-        return
+    def winInTwoMoves(self):
+        row = self.checkrow()
+        if row:
+            return(True, row)
+
+        col = self.checkcol()
+        if col:
+            return(True, col)
+
+        # self.checkdia(2, color)
+        return (False, None)
 
     def twoIntersection():
 
@@ -339,16 +396,19 @@ class GtpConnection():
         # 4. intersection of two promising patterns
         immedWin = self.immediateWin(color)
         if immedWin[0] == True:
-            return (color, immedWin[1])
+            return (True, immedWin[1])
 
         if immedWin[0] == "draw":
             return("draw", immedWin[1])
 
+        # self.showboard_cmd(1)
         opponent = 3 - color
         opimmedWin = self.immediateWin(opponent)
         if opimmedWin[0] == True:
             board = self.board.copy()
-            self.board.play_move_gomoku(opimmedWin[1], color)
+            coord = move_to_coord(opimmedWin[1], self.board.size)
+            move = coord_to_point(coord[0],coord[1], self.board.size)
+            self.board.play_move_gomoku(move, color)
             giveup = self.immediateWin(opponent)
             if giveup[0]==True:
                 self.board = board.copy()
@@ -361,10 +421,11 @@ class GtpConnection():
         if opimmedWin[1] == "draw":
             return("draw",None)
 
-        winInTwo = self.winInTwoMoves(color)
-        if winInTwo:
-            self.respond('{}'.format())
-            return
+        winInTwo = self.winInTwoMoves()
+        if winInTwo[0]:
+            return(True,winInTwo[1])
+        while True:
+            pass
 
         opWinInTwo = self.winInTwoMoves(opponent)
         if opWinInTwo:
@@ -376,7 +437,7 @@ class GtpConnection():
             self.respond('{}'.format())
             return
 
-    def solve(self, args):
+    def solve(self, args, genmove = False):
         signal.signal(signal.SIGALRM, handler)
         signal.alarm(self._timelimit)
         try:
@@ -386,25 +447,36 @@ class GtpConnection():
             game_end, winner = self.board.check_game_end_gomoku()
             if game_end:
                 if winner == 1:
-                   self.respond('{}'.format("b"))
+                    self.respond('{}'.format("b"))
                 elif winner == 2:
-                   self.respond('{}'.format("w"))
+                    self.respond('{}'.format("w"))
 
             else:
                 win, move = self.winpattern(color)
                 if win == True or win == "draw":
-                    move_coord = point_to_coord(move, self.board.size)
-                    move_as_string = format_point(move_coord)
+                    
                     if win ==True:
                         if color == 1:
-                            self.respond('{}'.format("b"+" "+move_as_string))
+                            if genmove:
+                                signal.alarm(0)
+                                return move
+                            self.respond('{}'.format("b"+" "+move))
                         else:
-                            self.respond('{}'.format("w"+" "+move_as_string))
+                            if genmove:
+                                signal.alarm(0)
+                                return move
+                            self.respond('{}'.format("w"+" "+move))
                     else:
                         if color == 1:
-                            self.respond('{}'.format("draw"+" "+move_as_string))
+                            if genmove:
+                                signal.alarm(0)
+                                return move
+                            self.respond('{}'.format("draw"+" "+move))
                         else:
-                            self.respond('{}'.format("draw"+" "+move_as_string))
+                            if genmove:
+                                signal.alarm(0)
+                                return move
+                            self.respond('{}'.format("draw"+" "+move))
                 
                 elif win == False:
                     if color == 1:
@@ -412,8 +484,9 @@ class GtpConnection():
                     else:
                         self.respond('{}'.format("b"))
 
-
         except TimeoutError:
+            if genmove:
+                return "unknown"
             self.respond('{}'.format("unknown"))
 
         signal.alarm(0)
@@ -423,35 +496,34 @@ class GtpConnection():
         """
         Generate a move for the color args[0] in {'b', 'w'}, for the game of gomoku.
         """
-        signal.signal(signal.SIGALRM, handler)
-        signal.alarm(self._timelimit)
+        # signal.signal(signal.SIGALRM, handler)
+        # signal.alarm(self._timelimit)
         # please note, call signal.alarm(0) to disable the alarm before you call return
-        try:
-            board_color = args[0].lower()
-            color = color_to_int(board_color)
-            game_end, winner = self.board.check_game_end_gomoku()
-            if game_end:
-                if winner == color:
-                    self.respond("pass")
-                else:
-                    self.respond("resign")
-                signal.alarm(0)
-                return
-            move = self.go_engine.get_move(self.board, color)
-            if move == PASS:
-                self.respond("pass")
-                signal.alarm(0)
-                return
-            move_coord = point_to_coord(move, self.board.size)
-            move_as_string = format_point(move_coord)
-            if self.board.is_legal_gomoku(move, color):
-                self.board.play_move_gomoku(move, color)
-                self.respond(move_as_string)
-            else:
-                self.respond("illegal move: {}".format(move_as_string))
-        except:
-            self.respond('{}'.format("unknown"))
 
+        board_color = args[0].lower()
+        color = color_to_int(board_color)
+        game_end, winner = self.board.check_game_end_gomoku()
+        if game_end:
+            if winner == color:
+                self.respond("pass")
+            else:
+                self.respond("resign")
+            # signal.alarm(0)
+            return
+        #move = self.go_engine.get_move(self.board, color)
+        move = self.solve(args, True)
+        # if move == PASS:
+        #     self.respond("pass")
+        #     # signal.alarm(0)
+        #     return
+        # move_coord = point_to_coord(move, self.board.size)
+        # move_as_string = format_point(move_coord)
+        # if self.board.is_legal_gomoku(move, color):
+        #     self.board.play_move_gomoku(move, color)
+        #     self.respond(move_as_string)
+        # else:
+        #     self.respond("illegal move: {}".format(move_as_string))
+        self.respond('{}'.format(move))
         signal.alarm(0)
         return
 
