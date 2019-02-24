@@ -84,8 +84,19 @@ class SimpleGoBoard(object):
         self.maxpoint = size * size + 3 * (size + 1)
         self.board = np.full(self.maxpoint, BORDER, dtype = np.int32)
         self.liberty_of = np.full(self.maxpoint, NULLPOINT, dtype = np.int32)
+#===================================================        
+        self.state_history = []
+        self.potential = {
+            BLACK ： {},
+            WHITE ： {},
+            "intercation" ： {}
+        }
+        self.update_potential()
+#===================================================
         self._initialize_empty_points(self.board)
         self._initialize_neighbors()
+    self.update_potential(self):
+    
 
     def copy(self):
         b = SimpleGoBoard(self.size)
@@ -415,10 +426,10 @@ class SimpleGoBoard(object):
         
         for point in white_points:
             if self.point_check_game_end_gomoku(point):
-                return True, WHITE
+                return True, "w"
     
         for point in black_points:
             if self.point_check_game_end_gomoku(point):
-                return True, BLACK
+                return True, "b"
 
         return False, None

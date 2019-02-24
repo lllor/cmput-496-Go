@@ -286,6 +286,7 @@ class GtpConnection():
         return
     def undoMove(self):
         if(len(self.played_states)>0):
+            print("undo")
             self.board = (copy.deepcopy(self.played_states[-1]))
             self.played_states.pop(-1)
            # print("current board:\n"+str(GoBoardUtil.get_twoD_board(self.board)))
@@ -293,128 +294,94 @@ class GtpConnection():
             self._toPlay = "w"
         else:
             self._toPlay = "b"
-    def long_neighbors(self,m):
-        """
-        precompute neighbor array.
-        For each point on the board, store its list of on-the-board neighbors
-        """
-        self.neighbors = [[],[],[],[],[]]
-        for point in range(self.maxpoint):
-            if self.board[point] == BORDER:
-                self.neighbors.append([])
-            else:
-                self.neighbors.append(self._on_board_neighbors(point))
-    def mysort(self,moves):
-        sortedList = []
-        dp = [[],[],[],[],[],[],[],[],[]]
-              #0, 1, 2, 3, 4, 5, 6, 7,8
-        color = self._toPlay
-        if(color == "b"):
-            color = 1
-        else:
-            color = 2
-        #moves = GoBoardUtil.generate_legal_moves_gomoku(self.board)
-        for each in moves:
-            nbs = self.board.neighbors_of_color(each, color)
-            
-            dp[len(nbs)].append(each)
+    
 
-        for eachdp in range(9):
-            singledp = dp.pop()
-            for ea in singledp:
-                sortedList.append(ea)
-        #print(sortedList)
-        return sortedList
     def negamaxBoolean(self,board,depth,ProofTree,DrawTree):
         self.board = board
-        
+        self.showboard_cmd(0)
         game_end,winner = self.board.check_game_end_gomoku()
         
-        #print(winner)
+        print(winner)
         if game_end:
             if(winner == self._toPlay):
-                return 1
+                return 1,None
             elif(winner == None):
-                return 0
+                pass
             else:
-                return -1
+            	print(1000)
+                return -1,None
         
         moves = GoBoardUtil.generate_legal_moves_gomoku(self.board)
-        #sort_moves = self.mysort(moves)
-       # print(moves)
+        if (len(moves) == 0):#no more moves, draw
+            return None,None
+
         gtp_moves = []
         for move in moves:
             coords = point_to_coord(move, self.board.size)
             gtp_moves.append(format_point(coords))
-        sorted_moves = ' '.join(gtp_moves)
+        sorted_moves = ' '.join(sorted(gtp_moves))
         sorted_moves = sorted_moves.split(' ')
 
-        #print(sorted_moves)
+        
+
         for m in sorted_moves:
-            print(self._toPlay+m)
             self.played_states.append(copy.deepcopy(self.board))
+
             self.play_cmd([self._toPlay,m])
-            win = -self.negamaxBoolean(board,depth-1,ProofTree,DrawTree)
-            
+            win,_ = self.negamaxBoolean(board,depth-1,ProofTree,DrawTree)
             self.undoMove()
-            if win == 1:
-                #print("the win"+m)
-                ProofTree.append(m)
-                return 1
-            if win == 0:
+            if win is None:
                 DrawTree.append(m)
-        print("end")
-        return -1
+            elif win == 1:
+                ProofTree.append(m)
+                return True,m
+                #return 0
+        #print("end")
+        if(len(DrawTree)>1):
+        	return None,DrawTree[-1]
+        else:
+        	return False,None
 
     def solve(self,agrs):
         back_up = self.board.copy()
         # to_play = state.current_player
         # Initialize proof tree and run negamax search starts with current player
-        #self._toPlay = "b"
-
-
-
-        proof_tree = [None]
+       
+        proof_tree = []
         draw_tree=[None]
 
-        try:
-            result = self.negamaxBoolean(self.board, 14, proof_tree,draw_tree)
-        except Exception as e:
-            # print(e)
-            print("error happend/time limie")
-            result = None
+        #try:
+        result,move = self.negamaxBoolean(self.board, 1000, proof_tree,draw_tree)
+        #except Exception as e:
+        #    self.board = back_up.copy()
+        #    self.respond("unknown")
+        #    return
+            #print("error happend/time limie")
+            #result = None
         
         
 
-        
+        #print(result)
         proof_tree.reverse()
         draw_tree.reverse()
         # Convert result to current player
         print(proof_tree)
-        #print(draw_tree)
+        print(draw_tree)
         if result == None:
-            return 'unknown', None
+            self.respond("draw "+ move)
         elif result == 1:
-            if proof_tree[0] == None:
-                proof_tree[0] = 'pass'
-                self.respond("draw")
-            else:
-                self.respond(self._toPlay+proof_tree[0])
-            #return GoBoardUtil.int_to_color(to_play), proof_tree[0]
+            self.respond(self._toPlay+move)
         else:
-            if draw_tree[0] != None:
-                #proof_tree[0] = 'pass'
-                self.respond("draw "+draw_tree[0])
-                return
-            #self.respond(GoBoardUtil.opponent(self._toPlay))
             if(self._toPlay == "b"):
                 self.respond("w")
             else:
                 self.respond("b")
+            #return GoBoardUtil.int_to_color(to_play), proof_tree[0]
+        
+            
 
         proof_tree = []
-        return
-
+            
 #=============================================================================================================
     def genmove_cmd(self, args):
         """
