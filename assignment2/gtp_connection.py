@@ -298,25 +298,25 @@ class GtpConnection():
             empty = 0
             for j in range(size):
                 currentColor = board[i][j]
+                #print(currentColor)
                 if currentColor == 0:
                     empty+=1
+                    if empty == 2:
+                        mem = (i+1,j+1)
                 elif currentColor == color:
                     count+= 1
                 else:
                     count = 0
                     empty = 0
 
-                if count == 2:
-                    mem = (i+1,j-1)
+                
                 if count >= 3:
-                    if count >=3:
+                    if empty >=3:
                         move_as_string = format_point(mem)
+                        #print('row',mem)
                         return move_as_string
         return None
 
-
-
-        return
     def checkcol(self):
         color = self._toPlay
         size = self.board.size
@@ -329,17 +329,18 @@ class GtpConnection():
                 currentColor = board[i][j]
                 if currentColor == 0:
                     empty+=1
+                    if empty == 2:
+                        mem = (i+1,j+1)
                 elif currentColor == color:
                     count+= 1
                 else:
                     count = 0
                     empty = 0
 
-                if count == 2:
-                    mem = (i-1,j+1)
                 if count >= 3:
-                    if count >=3:
+                    if empty >=3:
                         move_as_string = format_point(mem)
+                        #print("col")
                         return move_as_string
         return None
 
@@ -353,7 +354,7 @@ class GtpConnection():
 
         if len(moves) == 0:
             return ("draw", None)
-
+        #print(moves)
         for move in moves:
             self.board.play_move_gomoku(move, color)
             game_end, winner = self.board.check_game_end_gomoku()
@@ -411,19 +412,23 @@ class GtpConnection():
             self.board.play_move_gomoku(move, color)
             giveup = self.immediateWin(opponent)
             if giveup[0]==True:
+                #print(1)
                 self.board = board.copy()
                 return(False, None)
             elif giveup[1] == "draw":
+                #print(1)
                 return("draw",opimmedWin[1])
 
             self.board = board.copy()
             
         if opimmedWin[1] == "draw":
             return("draw",None)
-
+        #print(2)
         winInTwo = self.winInTwoMoves()
+        #print(winInTwo)
         if winInTwo[0]:
             return(True,winInTwo[1])
+        #print(4)
         while True:
             pass
 
