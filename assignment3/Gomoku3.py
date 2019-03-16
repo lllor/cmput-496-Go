@@ -10,9 +10,11 @@ class SimulationPlayer(object):
         return "Simulation Player ({0} sim.)".format(self.numSimulations)
 
     def genmove(self, state):
-        assert not state.endOfGame()
-        moves = state.legalMoves()
+        
+        moves = state.get_empty_points()
         numMoves = len(moves)
+        if numMoves == 0:
+            return PASS
         score = [0] * numMoves
         for i in range(numMoves):
             move = moves[i]
@@ -21,31 +23,43 @@ class SimulationPlayer(object):
         bestIndex = score.index(max(score))
         best = moves[bestIndex]
         #print("Best move:", best, "score", score[best])
-        assert best in state.legalMoves()
+        assert best in state.get_empty_points()
         return best
 
-    def simulate(self, board, move):
+    def simulate(self, state, move):
         WinnerStats = [0] * 3
-        gameLength = [0] * 10
-        #board.play_move_gomoku()
-        board.play(move)
-        #moveNr = state.moveNumber()
-        cboard = board.copy();
+
+        state.play_move_gomoku(move,state.toPlay)
+        moveNr = state.moveNumber()
+
+        
         for _ in range(self.numSimulations):
-            board = cboard.copy()
-            winner, length = board.simulate()
-            stats[winner] += 1
-            gameLength[length] += 1
+            if self.policy == 1:
+                winner, _ = state.simulate()
+            else:
+                winner, _ = state.rulesimulate()
+            state[winner] += 1
+            state.resetToMoveNumber(moveNr)
+
         assert sum(stats) == self.numSimulations
-        #assert moveNr == state.moveNumber()
-        board.undoMove()
+        assert moveNr == state.moveNumber()
+        
+        state.undoMove()
         eval = (WinnerStats[BLACK] + 0.5 * WinnerStats[EMPTY]) / self.numSimulations
-        if board.toPlay == WHITE:
+        if state.toPlay == WHITE:
             eval = 1 - eval
         return eval
 
-s = SimulationPlayer(10)
+def run():
+    """
+    start the gtp connection and wait for commands.
+    """
+    board = SimpleGoBoard(7)
+    con = GtpConnection(Gomoku3(10), board)
+    con.start_connection()
 
+if __name__=='__main__':
+    run()
 # def randomTTT(numSimulations):
 #     print("Playing {} random TicTacToe games ...".format(numSimulations))
 #     t = TicTacToe()

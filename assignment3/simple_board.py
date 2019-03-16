@@ -17,43 +17,36 @@ from board_util import GoBoardUtil, BLACK, WHITE, EMPTY, BORDER, \
 class SimpleGoBoard(object):
 #=====================================================================================
 #=====================================================================================
-    def winner(self):
-        result, winner = self.check_game_end_gomoku()
-        if result:
-            return winner
-        else:
-            return EMPTY
+
     def simulate(self):
         i = 0
-        if not self.endOfGame():
-            allMoves = self.legalMoves()
+        if not self.check_game_end_gomoku():
+            allMoves = self.get_empty_points()
             random.shuffle(allMoves)
-            while not self.endOfGame():
-                self.play(allMoves[i])
+            for i in range(len(allMoves)):
+                self.play_move_gomoku(allMoves[i],self.current_player)
+                Rs,Winner = self.check_game_end_gomoku()
+                if RS:
+                    return winner, i
+                else:
+                    if(len(self.get_empty_points))==0:
+                        return self.drawWinne, i
                 i += 1
-        return self.winner(), i
+    def moveNumber(self):
+        return (len(self.moves))
 
     def undoMove(self,location):
         self.board[location] = EMPTY
-        self.switchToPlay()
-    def play(self, location):
-        assert not self.endOfGame()
-        assert self.board[location] == EMPTY
-        
-        self.board[location] = self.toPlay
-        self.switchToPlay()
+        self.current_player = GoBoardUtil.opponent(color)
 
-    def switchToPlay(self):
-        if self.toPlay == BLACK:
-            self.toPlay = WHITE
-        else:
-            self.toPlay = BLACK
+    def resetToMoveNumber(self,num):
+        gap = (len(self.moves) - num)
+        if gap >= 0:
+            for i in range(gap):
+                location = self.moves.pop()
+                self.undoMove(location)
 
-    def endOfGame(self):
-        moves = GoBoardUtil.generate_legal_moves_gomoku(self.board):
-        return (   len(moves) == 0
-                or self.winner() != EMPTY
-               )
+
     
     def staticallyEvaluateForToPlay(self):
         winColor = self.winner()
@@ -64,9 +57,7 @@ class SimpleGoBoard(object):
         assert winColor == opponent(self.toPlay)
         return False
 
-    def setDrawWinner(self, color):
-        assert isEmptyBlackWhite(color)
-        self.drawWinner = color
+
 #=====================================================================================
 #=====================================================================================    	
     def get_color(self, point):
@@ -129,7 +120,7 @@ class SimpleGoBoard(object):
         The board is stored as a one-dimensional array
         See GoBoardUtil.coord_to_point for explanations of the array encoding
         """
-        self.toPlay = BLACK
+        self.moves=[]
         self.drawWinner = EMPTY
         self.size = size
         self.NS = size + 1
@@ -403,6 +394,7 @@ class SimpleGoBoard(object):
             return False
         self.board[point] = color
         self.current_player = GoBoardUtil.opponent(color)
+        self.moves.append(point)
         return True
         
     def _point_direction_check_connect_gomoko(self, point, shift):
