@@ -31,7 +31,7 @@ class GtpConnection():
         self.board = board
 #=================================================================================================================
 #=================================================================================================================
-        self.policytype = 0
+        self.policytype = 1
         self._toPlay = 1
 #=================================================================================================================
 #=================================================================================================================
@@ -264,15 +264,22 @@ class GtpConnection():
 
     def policy_cmd(self,args):
     	policy_type = args[0].lower()
-    	if policy_type == "rulebased":
-    		self.policytype = 0
-    	else:
+    	if policy_type == "rule_based":
     		self.policytype = 1
+    		self.go_engine.policytype = 1
+    	else:
+    		self.policytype = 0
+    		self.go_engine.policytype = 0
 
     def policy_moves_cmd(self):
     	if self.policytype == 0:
+    		#self.respond("Random")
+    		move_type = "Random"
+    		moves = self.board.get_empty_points()
     	else:
-    		self.respond("Random")
+    		move_type,moves = self.board.GetMoveList()
+
+
 #=================================================================================================================
 #=================================================================================================================
 

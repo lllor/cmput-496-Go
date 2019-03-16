@@ -5,6 +5,7 @@ from simple_board import SimpleGoBoard
 class SimulationPlayer(object):
     def __init__(self, numSimulations):
         self.numSimulations = numSimulations
+        self.policytype = 1
 
     def name(self):
         return "Simulation Player ({0} sim.)".format(self.numSimulations)
@@ -34,7 +35,7 @@ class SimulationPlayer(object):
 
         
         for _ in range(self.numSimulations):
-            if self.policy == 1:
+            if self.policytype == 0:
                 winner, _ = state.simulate()
             else:
                 winner, _ = state.rulesimulate()

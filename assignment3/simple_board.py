@@ -18,11 +18,24 @@ class SimpleGoBoard(object):
 #=====================================================================================
 #=====================================================================================
 
-    def simulate(self):
+    def simulate(self):                                                     #the random simulation
         i = 0
-        if not self.check_game_end_gomoku():
-            allMoves = self.get_empty_points()
-            random.shuffle(allMoves)
+        if not self.check_game_end_gomoku():                                #if the game is not end
+            allMoves = self.get_empty_points()                              #get all empty point(legal move)
+            random.shuffle(allMoves)                                            
+            for i in range(len(allMoves)):                                  #play each legal move
+                self.play_move_gomoku(allMoves[i],self.current_player)
+                Rs,Winner = self.check_game_end_gomoku()                    #after each move, check the board state --> Win,Draw
+                if RS:
+                    return winner, i
+                else:
+                    if(len(self.get_empty_points))==0:
+                        return self.drawWinne, i
+                
+    def rulesimulate(self):                                                 #the rule_based simulation
+        i = 0
+        if not self.check_game_end_gomoku():                               
+            allMoves = self.GetMoveList()                                   #get all the recommend move
             for i in range(len(allMoves)):
                 self.play_move_gomoku(allMoves[i],self.current_player)
                 Rs,Winner = self.check_game_end_gomoku()
@@ -31,19 +44,23 @@ class SimpleGoBoard(object):
                 else:
                     if(len(self.get_empty_points))==0:
                         return self.drawWinne, i
-                i += 1
-    def moveNumber(self):
+
+    def GetMoveList(self):
+        #generate moves based on pattern
+    def GetMoveList(self):
+
+    def moveNumber(self):                                                   #get the step num, use to undo
         return (len(self.moves))
 
-    def undoMove(self,location):
+    def undoMove(self,location):                                            #set the point back to empty, and switch the player
         self.board[location] = EMPTY
         self.current_player = GoBoardUtil.opponent(color)
 
-    def resetToMoveNumber(self,num):
+    def resetToMoveNumber(self,num):                                        #the move want to undo is between the current step and the prev one 
         gap = (len(self.moves) - num)
         if gap >= 0:
             for i in range(gap):
-                location = self.moves.pop()
+                location = self.moves.pop()                                 #also remove it from the movelist
                 self.undoMove(location)
 
 
