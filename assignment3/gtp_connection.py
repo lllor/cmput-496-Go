@@ -29,6 +29,13 @@ class GtpConnection():
         self._debug_mode = debug_mode
         self.go_engine = go_engine
         self.board = board
+#=================================================================================================================
+#=================================================================================================================
+        self.policytype = 0
+        self._toPlay = 1
+#=================================================================================================================
+#=================================================================================================================
+
         self.commands = {
             "protocol_version": self.protocol_version_cmd,
             "quit": self.quit_cmd,
@@ -42,6 +49,8 @@ class GtpConnection():
             "genmove": self.genmove_cmd,
             "list_commands": self.list_commands_cmd,
             "play": self.play_cmd,
+            "policy": self.policy_cmd,
+            "policy_moves":self.policy_moves_cmd,
             "legal_moves": self.legal_moves_cmd,
             "gogui-rules_game_id": self.gogui_rules_game_id_cmd,
             "gogui-rules_board_size": self.gogui_rules_board_size_cmd,
@@ -219,6 +228,12 @@ class GtpConnection():
         try:
             board_color = args[0].lower()
             board_move = args[1]
+            
+            if board_color == "b" :
+                self._toPlay = 2
+            else:
+                self._toPlay = 1
+            
             if board_color != "b" and board_color !="w":
                 self.respond("illegal move: \"{}\" wrong color".format(board_color))
                 return
@@ -244,6 +259,23 @@ class GtpConnection():
             self.respond()
         except Exception as e:
             self.respond('{}'.format(str(e)))
+#=================================================================================================================
+#=================================================================================================================
+
+    def policy_cmd(self,args):
+    	policy_type = args[0].lower()
+    	if policy_type == "rulebased":
+    		self.policytype = 0
+    	else:
+    		self.policytype = 1
+
+    def policy_moves_cmd(self):
+    	if self.policytype == 0:
+    	else:
+    		self.respond("Random")
+#=================================================================================================================
+#=================================================================================================================
+
 
     def genmove_cmd(self, args):
         """
