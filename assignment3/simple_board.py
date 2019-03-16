@@ -36,6 +36,10 @@ class SimpleGoBoard(object):
         i = 0
         if not self.check_game_end_gomoku():                               
             allMoves = self.GetMoveList()                                   #get all the recommend move
+            if allMoves:
+                return self.current_player, allMoves[0] #note: return the first in allMoves
+                                                        #need to change if all moves are needed
+            allMoves = self.get_empty_points()
             for i in range(len(allMoves)):
                 self.play_move_gomoku(allMoves[i],self.current_player)
                 Rs,Winner = self.check_game_end_gomoku()
@@ -45,10 +49,147 @@ class SimpleGoBoard(object):
                     if(len(self.get_empty_points))==0:
                         return self.drawWinne, i
 
+
+############################################################
+    def immediateWin(self, color, moves):
+        
+        moveList = []
+        for move in moves:
+            self.play_move_gomoku(move, color)
+            game_end, winner = self.check_game_end_gomoku()
+            self.undoMove(move)
+            if game_end:
+                moveList.append(move) 
+
+        return moveList
+
+    def get_twoD_board(self):
+        size = self.size
+        board2d = np.zeros((size, size), dtype = np.int32)
+        for row in range(size):
+            start = self.row_start(row + 1)
+            board2d[row, :] = self.board[start : start + size]
+        return board2d
+
+    def fourInRow(self, color):
+        size = self.size
+        board = self.get_twoD_board()
+        for i in range(size):
+            count = 0
+            empty = 0
+            for j in range(size):
+                currentColor = board[i][j]
+                if currentColor == 0:
+                    if count == 4 and empty == 1:
+                        return True
+                    else:
+                        empty = 1
+                elif currentColor == color:
+                    count+= 1
+                else:
+                    count = 0
+                    empty = 0
+        return False
+
+    def fourInCol(self, color):
+        size = self.size
+        board = self.get_twoD_board()
+        for j in range(size):
+            count = 0
+            empty = 0
+            for i in range(size):
+                currentColor = board[i][j]
+                if currentColor == 0:
+                    if count == 4 and empty == 1:
+                        return True
+                    else:
+                        empty = 1
+                elif currentColor == color:
+                    count+= 1
+                else:
+                    count = 0
+                    empty = 0
+        return False
+
+    def checkDia(self, board, i, j, color, count, empty,flag):
+        currentColor = board[i][j]
+        if currentColor == 0:
+            if count == 4 and empty == 1:
+                return True
+            else:
+                empty = 1
+        elif currentColor == color:
+            count += 1
+        else:
+            count = 0
+            empty = 0
+
+        try:
+            if (flag == "/"):
+                if (j==0):
+                    return False
+                return self.checkDia(board, i+1, j-1, black, white,"/")
+            else:
+                return self.checkDia(board, i+1, j+1, black, white,"\\")
+        except:                  
+            return False    
+
+    def fourIndia(self, color):
+        board = self.get_twoD_board()
+        for i in range(size):
+            for j in range(size):
+                if checkDia(board, i, j, color, 0, 0, '/') or checkDia(board, i, j, color, 0, 0, '\\'):
+                    return True
+        return False
+
+    def isOpenFour(self, color, move):
+        return fourInRow(color) or fourInCol(color) or fourInDia(color)
+
+    def openFour(self, color, moves):
+        moveList = []
+        for move in moves:
+            self.play_move_gomoku(move, color)
+            if isOpenFour(color, move):
+                moveList.append(move)
+            self.undoMove(move)
+
+        return moveList
+
+    def blockOpenFour(self, color, op_color, moves):
+        movelist = []
+        if openFour(op_color, moves):
+            for move in moves:
+                self.play_move_gomoku(move, color)
+                if not openFour(op_color, moves):
+                    movelist.append(move)
+                self.undoMove(move)
+
+        return movelist
+
     def GetMoveList(self):
         #generate moves based on pattern
-    def GetMoveList(self):
+        moves = self.get_empty_points()
+        color = self.current_player
+        op_color = GoBoardUtil.opponent(self.current_player)
+        #rule1: Win
+        moveList = self.immediateWin(color, moves)
+        if movelist:
+            return movelist
 
+        #rule2: BlockWin
+        moveList = self.immediateWin(op_color, moves)
+        if movelist:
+            return movelist
+        
+        #rule3: OpenFour
+        movelist = self.openFour(color, moves)
+        if movelist:
+            return movelist
+        #rule4: BlockOpenFour
+        movelist = self.blockOpenFour(color, op_color, moves)
+        #rule5: Random
+        return None
+#############################################################
     def moveNumber(self):                                                   #get the step num, use to undo
         return (len(self.moves))
 
