@@ -36,10 +36,6 @@ class SimpleGoBoard(object):
         i = 0
         if not self.check_game_end_gomoku():                               
             allMoves = self.GetMoveList()                                   #get all the recommend move
-            if allMoves:
-                return self.current_player, allMoves[0] #note: return the first in allMoves
-                                                        #need to change if all moves are needed
-            allMoves = self.get_empty_points()
             for i in range(len(allMoves)):
                 self.play_move_gomoku(allMoves[i],self.current_player)
                 Rs,Winner = self.check_game_end_gomoku()
@@ -48,6 +44,7 @@ class SimpleGoBoard(object):
                 else:
                     if(len(self.get_empty_points))==0:
                         return self.drawWinne, i
+
 
 
 ############################################################
@@ -174,21 +171,23 @@ class SimpleGoBoard(object):
         #rule1: Win
         moveList = self.immediateWin(color, moves)
         if movelist:
-            return movelist
+            return "Win",movelist
 
         #rule2: BlockWin
         moveList = self.immediateWin(op_color, moves)
         if movelist:
-            return movelist
+            return "BlockWin",movelist
         
         #rule3: OpenFour
         movelist = self.openFour(color, moves)
         if movelist:
-            return movelist
+            return "OpenFour"，movelist
         #rule4: BlockOpenFour
         movelist = self.blockOpenFour(color, op_color, moves)
+            if movelist:
+            return "BlockOpenFour"，movelist
         #rule5: Random
-        return None
+        return "Random",None
 #############################################################
     def moveNumber(self):                                                   #get the step num, use to undo
         return (len(self.moves))

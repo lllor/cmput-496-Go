@@ -275,9 +275,20 @@ class GtpConnection():
     	if self.policytype == 0:
     		#self.respond("Random")
     		move_type = "Random"
-    		moves = self.board.get_empty_points()
+    		#moves = self.board.get_empty_points()
     	else:
     		move_type,moves = self.board.GetMoveList()
+    	
+    	if (move_type) == "Random":
+    		moves = self.board.get_empty_points()
+
+    	gtp_moves=[]
+    	for move in moves:
+            coords = point_to_coord(move, self.board.size)
+            gtp_moves.append(format_point(coords))
+        sorted_moves = ' '.join(sorted(gtp_moves))
+        self.respond(move_type+" "+sorted_moves)
+
 
 
 #=================================================================================================================
@@ -297,7 +308,7 @@ class GtpConnection():
             else:
                 self.respond("resign")
             return
-        move = self.go_engine.get_move(self.board, color)
+        move = self.go_engine.genmove(self.board, color)
         if move == PASS:
             self.respond("pass")
             return
