@@ -57,6 +57,7 @@ class SimpleGoBoard(object):
         for move in moves:
             self.play_move_gomoku(move, color)
             game_end, winner = self.check_game_end_gomoku()
+            self.moves.pop() 
             self.undoMove(move)
             if game_end:
                 moveList.append(move) 
@@ -136,21 +137,22 @@ class SimpleGoBoard(object):
 
     def fourIndia(self, color):
         board = self.get_twoD_board()
-        for i in range(size):
-            for j in range(size):
-                if checkDia(board, i, j, color, 0, 0, '/') or checkDia(board, i, j, color, 0, 0, '\\'):
+        for i in range(self.size):
+            for j in range(self.size):
+                if self.checkDia(board, i, j, color, 0, 0, '/') or self.checkDia(board, i, j, color, 0, 0, '\\'):
                     return True
         return False
 
     def isOpenFour(self, color, move):
-        return fourInRow(color) or fourInCol(color) or fourInDia(color)
+        return self.fourInRow(color) or self.fourInCol(color) or self.fourIndia(color)
 
     def openFour(self, color, moves):
         moveList = []
         for move in moves:
             self.play_move_gomoku(move, color)
-            if isOpenFour(color, move):
+            if self.isOpenFour(color, move):
                 moveList.append(move)
+            self.moves.pop() 
             self.undoMove(move)
 
         return moveList
@@ -162,6 +164,7 @@ class SimpleGoBoard(object):
                 self.play_move_gomoku(move, color)
                 if not openFour(op_color, moves):
                     movelist.append(move)
+                self.moves.pop() 
                 self.undoMove(move)
 
         return movelist
@@ -173,29 +176,31 @@ class SimpleGoBoard(object):
         op_color = GoBoardUtil.opponent(self.current_player)
         #rule1: Win
         moveList = self.immediateWin(color, moves)
-        if movelist:
-            return movelist
+        if moveList:
+            return "Win",moveList
 
         #rule2: BlockWin
         moveList = self.immediateWin(op_color, moves)
-        if movelist:
-            return movelist
+        if moveList:
+            return "BlockWin",moveList
         
         #rule3: OpenFour
-        movelist = self.openFour(color, moves)
-        if movelist:
-            return movelist
+        moveList = self.openFour(color, moves)
+        if moveList:
+            return "OpenFour",moveList
         #rule4: BlockOpenFour
-        movelist = self.blockOpenFour(color, op_color, moves)
+        moveList = self.blockOpenFour(color, op_color, moves)
+        if moveList:
+            return "BlockOpenFour",moveList
         #rule5: Random
-        return None
+        return "Random",None
 #############################################################
     def moveNumber(self):                                                   #get the step num, use to undo
         return (len(self.moves))
 
     def undoMove(self,location):                                            #set the point back to empty, and switch the player
         self.board[location] = EMPTY
-        self.current_player = GoBoardUtil.opponent(color)
+        self.current_player = GoBoardUtil.opponent(self.current_player)
 
     def resetToMoveNumber(self,num):                                        #the move want to undo is between the current step and the prev one 
         gap = (len(self.moves) - num)

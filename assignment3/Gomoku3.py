@@ -1,8 +1,8 @@
-from board_util import BLACK, WHITE, EMPTY
+from gtp_connection import GtpConnection
+from board_util import GoBoardUtil
 from simple_board import SimpleGoBoard
-
 #using Flat Monte Carlo
-class SimulationPlayer(object):
+class Gomoku3(object):
     def __init__(self, numSimulations):
         self.numSimulations = numSimulations
         self.policytype = 1

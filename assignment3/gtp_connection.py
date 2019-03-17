@@ -108,13 +108,13 @@ class GtpConnection():
         if self.has_arg_error(command_name, len(args)):
             return
         if command_name in self.commands:
-            try:
-                self.commands[command_name](args)
-            except Exception as e:
-                self.debug_msg("Error executing command {}\n".format(str(e)))
-                self.debug_msg("Stack Trace:\n{}\n".
-                               format(traceback.format_exc()))
-                raise e
+            #try:
+            self.commands[command_name](args)
+            # except Exception as e:
+            #     self.debug_msg("Error executing command {}\n".format(str(e)))
+            #     self.debug_msg("Stack Trace:\n{}\n".
+            #                    format(traceback.format_exc()))
+            #     raise e
         else:
             self.debug_msg("Unknown command: {}\n".format(command_name))
             self.error('Unknown command')
@@ -271,13 +271,23 @@ class GtpConnection():
     		self.policytype = 0
     		self.go_engine.policytype = 0
 
-    def policy_moves_cmd(self):
-    	if self.policytype == 0:
-    		#self.respond("Random")
-    		move_type = "Random"
-    		moves = self.board.get_empty_points()
-    	else:
-    		move_type,moves = self.board.GetMoveList()
+    def policy_moves_cmd(self,args):
+        if self.policytype == 0:
+        #self.respond("Random")
+            move_type = "Random"
+            #moves = self.board.get_empty_points()
+        else:
+            move_type,moves = self.board.GetMoveList()
+            
+        if (move_type) == "Random":
+           moves = self.board.get_empty_points()
+
+        gtp_moves=[]
+        for move in moves:
+            coords = point_to_coord(move, self.board.size)
+            gtp_moves.append(format_point(coords))
+        sorted_moves = ' '.join(sorted(gtp_moves))
+        self.respond(move_type+" "+sorted_moves)
 
 
 #=================================================================================================================
