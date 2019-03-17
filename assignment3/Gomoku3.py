@@ -7,9 +7,8 @@ class Gomoku3(object):
     def __init__(self, numSimulations):
         self.numSimulations = numSimulations
         self.policytype = 1
-
-    def name(self):
-        return "Simulation Player ({0} sim.)".format(self.numSimulations)
+        self.name = "GomokuAssignment3"
+        self.version = 1.0        
 
     def genmove(self, state):
         
