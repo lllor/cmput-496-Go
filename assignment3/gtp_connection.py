@@ -263,13 +263,14 @@ class GtpConnection():
 #=================================================================================================================
 
     def policy_cmd(self,args):
-    	policy_type = args[0].lower()
-    	if policy_type == "rule_based":
-    		self.policytype = 1
-    		self.go_engine.policytype = 1
-    	else:
-    		self.policytype = 0
-    		self.go_engine.policytype = 0
+        policy_type = args[0].lower()
+        if policy_type == "rule_based":
+            self.policytype = 1
+            self.go_engine.policytype = 1
+        else:
+            self.policytype = 0
+            self.go_engine.policytype = 0
+        self.respond()
 
     def policy_moves_cmd(self,args):
         if self.policytype == 0:
