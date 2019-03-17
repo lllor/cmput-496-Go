@@ -263,27 +263,27 @@ class GtpConnection():
 #=================================================================================================================
 
     def policy_cmd(self,args):
-    	policy_type = args[0].lower()
-    	if policy_type == "rule_based":
-    		self.policytype = 1
-    		self.go_engine.policytype = 1
-    	else:
-    		self.policytype = 0
-    		self.go_engine.policytype = 0
+        policy_type = args[0].lower()
+        if policy_type == "rule_based":
+            self.policytype = 1
+            self.go_engine.policytype = 1
+        else:
+            self.policytype = 0
+            self.go_engine.policytype = 0
 
     def policy_moves_cmd(self):
-    	if self.policytype == 0:
-    		#self.respond("Random")
-    		move_type = "Random"
-    		#moves = self.board.get_empty_points()
-    	else:
-    		move_type,moves = self.board.GetMoveList()
-    	
-    	if (move_type) == "Random":
-    		moves = self.board.get_empty_points()
+        if self.policytype == 0:
+        #self.respond("Random")
+            move_type = "Random"
+            #moves = self.board.get_empty_points()
+        else:
+            move_type,moves = self.board.GetMoveList()
+            
+        if (move_type) == "Random":
+           moves = self.board.get_empty_points()
 
-    	gtp_moves=[]
-    	for move in moves:
+        gtp_moves=[]
+        for move in moves:
             coords = point_to_coord(move, self.board.size)
             gtp_moves.append(format_point(coords))
         sorted_moves = ' '.join(sorted(gtp_moves))

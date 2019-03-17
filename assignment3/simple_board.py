@@ -181,11 +181,11 @@ class SimpleGoBoard(object):
         #rule3: OpenFour
         movelist = self.openFour(color, moves)
         if movelist:
-            return "OpenFour"，movelist
+            return "OpenFour", movelist
         #rule4: BlockOpenFour
         movelist = self.blockOpenFour(color, op_color, moves)
-            if movelist:
-            return "BlockOpenFour"，movelist
+        if movelist:
+            return "BlockOpenFour", movelist
         #rule5: Random
         return "Random",None
 #############################################################

@@ -1,6 +1,6 @@
 from board_util import BLACK, WHITE, EMPTY
 from simple_board import SimpleGoBoard
-
+from gtp_connection import GtpConnection
 #using Flat Monte Carlo
 class SimulationPlayer(object):
     def __init__(self, numSimulations):
@@ -10,7 +10,7 @@ class SimulationPlayer(object):
     def name(self):
         return "Simulation Player ({0} sim.)".format(self.numSimulations)
 
-    def genmove(self, state):
+    def genmove(self, state, color):
         
         moves = state.get_empty_points()
         numMoves = len(moves)
@@ -56,7 +56,7 @@ def run():
     start the gtp connection and wait for commands.
     """
     board = SimpleGoBoard(7)
-    con = GtpConnection(Gomoku3(10), board)
+    con = GtpConnection(SimulationPlayer(10), board)
     con.start_connection()
 
 if __name__=='__main__':
