@@ -8,7 +8,7 @@ Implements a basic Go board with functions to:
 
 The board uses a 1-dimensional representation with padding
 """
-
+import random
 import numpy as np
 from board_util import GoBoardUtil, BLACK, WHITE, EMPTY, BORDER, \
                        PASS, is_black_white, coord_to_point, where1d, \
@@ -19,35 +19,40 @@ class SimpleGoBoard(object):
 #=====================================================================================
 
     def simulate(self):                                                     #the random simulation
-        i = 0
-        if not self.check_game_end_gomoku():                                #if the game is not end
+        if not self.check_game_end_gomoku()[0]:                                #if the game is not end
             allMoves = self.get_empty_points()                              #get all empty point(legal move)
             random.shuffle(allMoves)                                            
             for i in range(len(allMoves)):                                  #play each legal move
                 self.play_move_gomoku(allMoves[i],self.current_player)
                 Rs,Winner = self.check_game_end_gomoku()                    #after each move, check the board state --> Win,Draw
-                if RS:
-                    return winner, i
+                if Rs:
+                    return Winner, "Random"
                 else:
                     if(len(self.get_empty_points))==0:
-                        return self.drawWinne, i
+                        return self.drawWinner, "Random"
                 
     def rulesimulate(self):                                                 #the rule_based simulation
-        i = 0
-        if not self.check_game_end_gomoku():                               
-            allMoves = self.GetMoveList()                                   #get all the recommend move
-            if allMoves:
-                return self.current_player, allMoves[0] #note: return the first in allMoves
-                                                        #need to change if all moves are needed
-            allMoves = self.get_empty_points()
-            for i in range(len(allMoves)):
-                self.play_move_gomoku(allMoves[i],self.current_player)
-                Rs,Winner = self.check_game_end_gomoku()
-                if RS:
-                    return winner, i
+        #return BLACK, 0
+        RS,Winner = self.check_game_end_gomoku()
+        if not RS:                             
+            while True:
+                movetype,moves = self.GetMoveList()
+                random.shuffle(moves)
+                if(movetype == "Random"):
+                    allMoves = self.get_empty_points()                              #get all empty point(legal move)
+                    random.shuffle(allMoves)
+                    move = allMoves[0]
                 else:
-                    if(len(self.get_empty_points))==0:
-                        return self.drawWinne, i
+                    move = moves[0]
+                self.play_move_gomoku(move,self.current_player)
+                RS,Winner = self.check_game_end_gomoku()                    #after each move, check the board state --> Win,Draw
+                if RS:
+                    return Winner, None
+                else:
+                    if(len(self.get_empty_points()))==0:
+                        return self.drawWinner, None
+        else:
+            return self.current_player, None    
 
 
 ############################################################
@@ -57,7 +62,7 @@ class SimpleGoBoard(object):
         for move in moves:
             self.play_move_gomoku(move, color)
             game_end, winner = self.check_game_end_gomoku()
-            self.moves.pop() 
+            self.movelist.pop() 
             self.undoMove(move)
             if game_end:
                 moveList.append(move) 
@@ -84,6 +89,7 @@ class SimpleGoBoard(object):
                     if count == 4 and empty == 1:
                         return True
                     else:
+                        count = 0
                         empty = 1
                 elif currentColor == color:
                     count+= 1
@@ -102,8 +108,10 @@ class SimpleGoBoard(object):
                 currentColor = board[i][j]
                 if currentColor == 0:
                     if count == 4 and empty == 1:
+                        #print(i,j)
                         return True
                     else:
+                        count = 0
                         empty = 1
                 elif currentColor == color:
                     count+= 1
@@ -118,6 +126,7 @@ class SimpleGoBoard(object):
             if count == 4 and empty == 1:
                 return True
             else:
+                count = 0
                 empty = 1
         elif currentColor == color:
             count += 1
@@ -144,27 +153,39 @@ class SimpleGoBoard(object):
         return False
 
     def isOpenFour(self, color, move):
+        #print()
         return self.fourInRow(color) or self.fourInCol(color) or self.fourIndia(color)
 
+    
     def openFour(self, color, moves):
+        # print(self.board)
+        # print(moves)
         moveList = []
+        moves = self.get_empty_points()
+        #print(moves)
         for move in moves:
             self.play_move_gomoku(move, color)
             if self.isOpenFour(color, move):
                 moveList.append(move)
-            self.moves.pop() 
+            self.movelist.pop() 
             self.undoMove(move)
 
         return moveList
 
     def blockOpenFour(self, color, op_color, moves):
         movelist = []
-        if openFour(op_color, moves):
+        #print(moves)
+        #print(self.movelist)
+        #print("\n")
+        if self.openFour(op_color, moves):
             for move in moves:
                 self.play_move_gomoku(move, color)
-                if not openFour(op_color, moves):
+                
+                if not self.openFour(op_color, moves):
                     movelist.append(move)
-                self.moves.pop() 
+        #        print(self.movelist)
+                self.movelist.pop()
+        #        print(self.movelist) 
                 self.undoMove(move)
 
         return movelist
@@ -193,23 +214,21 @@ class SimpleGoBoard(object):
         if moveList:
             return "BlockOpenFour",moveList
         #rule5: Random
-        return "Random",None
+        return "Random",moves
 #############################################################
     def moveNumber(self):                                                   #get the step num, use to undo
-        return (len(self.moves))
+        return (len(self.movelist))
 
     def undoMove(self,location):                                            #set the point back to empty, and switch the player
         self.board[location] = EMPTY
         self.current_player = GoBoardUtil.opponent(self.current_player)
 
     def resetToMoveNumber(self,num):                                        #the move want to undo is between the current step and the prev one 
-        gap = (len(self.moves) - num)
+        gap = (len(self.movelist) - num)
         if gap >= 0:
             for i in range(gap):
-                location = self.moves.pop()                                 #also remove it from the movelist
+                location = self.movelist.pop()                                 #also remove it from the movelist
                 self.undoMove(location)
-
-
     
     def staticallyEvaluateForToPlay(self):
         winColor = self.winner()
@@ -283,7 +302,7 @@ class SimpleGoBoard(object):
         The board is stored as a one-dimensional array
         See GoBoardUtil.coord_to_point for explanations of the array encoding
         """
-        self.moves=[]
+        self.movelist=[]
         self.drawWinner = EMPTY
         self.size = size
         self.NS = size + 1
@@ -557,7 +576,9 @@ class SimpleGoBoard(object):
             return False
         self.board[point] = color
         self.current_player = GoBoardUtil.opponent(color)
-        self.moves.append(point)
+        self.movelist.append(point)
+
+        #print(self.movelist)
         return True
         
     def _point_direction_check_connect_gomoko(self, point, shift):

@@ -1,6 +1,7 @@
 from gtp_connection import GtpConnection
 from board_util import GoBoardUtil
 from simple_board import SimpleGoBoard
+from board_util import GoBoardUtil, BLACK, WHITE, EMPTY, PASS
 #using Flat Monte Carlo
 class Gomoku3(object):
     def __init__(self, numSimulations):
@@ -15,7 +16,7 @@ class Gomoku3(object):
         moves = state.get_empty_points()
         numMoves = len(moves)
         if numMoves == 0:
-            return PASS
+            return "PASS"
         score = [0] * numMoves
         for i in range(numMoves):
             move = moves[i]
@@ -30,25 +31,25 @@ class Gomoku3(object):
     def simulate(self, state, move):
         WinnerStats = [0] * 3
 
-        state.play_move_gomoku(move,state.toPlay)
+        state.play_move_gomoku(move,state.current_player)
         moveNr = state.moveNumber()
-
         
-        for _ in range(self.numSimulations):
+        for i in range(self.numSimulations):
             if self.policytype == 0:
                 winner, _ = state.simulate()
             else:
                 winner, _ = state.rulesimulate()
-            state[winner] += 1
+            WinnerStats[winner] += 1
             state.resetToMoveNumber(moveNr)
 
-        assert sum(stats) == self.numSimulations
+        assert sum(WinnerStats) == self.numSimulations
         assert moveNr == state.moveNumber()
         
-        state.undoMove()
+        state.undoMove(state.movelist.pop())
         eval = (WinnerStats[BLACK] + 0.5 * WinnerStats[EMPTY]) / self.numSimulations
-        if state.toPlay == WHITE:
+        if state.current_player == WHITE:
             eval = 1 - eval
+        #print("end")
         return eval
 
 def run():
