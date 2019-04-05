@@ -318,31 +318,51 @@ class GtpConnection():
             else:
                 self.respond("resign")
             return
-        moves = self.board.get_empty_points()
-        board_is_full = (len(moves) == 0)
-        if board_is_full:
-            self.respond("pass")
-            return
-        move=None
-        try:
-            signal.alarm(int(self.timelimit))
-            self.sboard = self.board.copy()
-            move = self.go_engine.get_move(self.board, color)
-            self.board=self.sboard
-            signal.alarm(0)
-        except Exception as e:
-            move=self.go_engine.best_move
 
-        if move == PASS:
-            self.respond("pass")
-            return
-        move_coord = point_to_coord(move, self.board.size)
-        move_as_string = format_point(move_coord)
-        if self.board.is_legal_gomoku(move, color):
-            self.board.play_move_gomoku(move, color)
-            self.respond(move_as_string)
-        else:
-            self.respond("illegal move: {}".format(move_as_string))
+        count_oppoent = 0
+        flag = 0
+        board2D = self.board2d()
+        for i in range(7):
+        	for j in range(7):
+        		if board2D[i][j] == 3-color:
+        			count_oppoent = count_oppoent + 1
+        		if count_oppoent >= 2:
+        			flag = 1
+        			break
+        if flag == 1:
+		    moves = self.board.get_empty_points()
+		    board_is_full = (len(moves) == 0)
+		    if board_is_full:
+		        self.respond("pass")
+		        return
+		    move=None
+		    try:
+		        signal.alarm(int(self.timelimit))
+		        self.sboard = self.board.copy()
+		        move = self.go_engine.get_move(self.board, color)
+		        self.board=self.sboard
+		        signal.alarm(0)
+		    except Exception as e:
+		        move=self.go_engine.best_move
+
+		    if move == PASS:
+		        self.respond("pass")
+		        return
+		    move_coord = point_to_coord(move, self.board.size)
+		    move_as_string = format_point(move_coord)
+		    if self.board.is_legal_gomoku(move, color):
+		        self.board.play_move_gomoku(move, color)
+		        self.respond(move_as_string)
+		    else:
+		        self.respond("illegal move: {}".format(move_as_string))
+		else:
+			mid = board2D[3][3]
+			if mid == 0:
+				#play mid
+			if mid == 3-color:
+				#
+			if mid == color:
+				
 
     def gogui_rules_game_id_cmd(self, args):
         self.respond("Gomoku")
