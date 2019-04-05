@@ -329,6 +329,8 @@ class GtpConnection():
         		if count_oppoent >= 2:
         			flag = 1
         			break
+        
+
         if flag == 1:
 		    moves = self.board.get_empty_points()
 		    board_is_full = (len(moves) == 0)
@@ -358,12 +360,20 @@ class GtpConnection():
 		else:
 			mid = board2D[3][3]
 			if mid == 0:
-				#play mid
-			if mid == 3-color:
-				#
-			if mid == color:
-				
-
+				move = coord_to_point(3,3,7)
+				self.board.play_move_gomoku(move, color)
+			elif board2D[2][3] == 3-color or board2D[3][4]== 3-color:
+				move = coord_to_point(2,4,7)
+				self.board.play_move_gomoku(move, color)
+			elif board2D[4][3] == 3-color or board2D[3][2]== 3-color:
+				move = coord_to_point(4,2,7)
+				self.board.play_move_gomoku(move, color)
+			elif board2D[2][2] == 3-color or board2D[4][4]== 3-color:
+				move = coord_to_point(4,2,7)
+				self.board.play_move_gomoku(move, color)
+			elif board2D[2][4] == 3-color or board2D[4][2]== 3-color: 
+				move = coord_to_point(2,2,7)
+				self.board.play_move_gomoku(move, color)
     def gogui_rules_game_id_cmd(self, args):
         self.respond("Gomoku")
     
