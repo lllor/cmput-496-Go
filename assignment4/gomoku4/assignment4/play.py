@@ -78,7 +78,7 @@ def playSingleGame(alternative=False):
             assert(status=='unknown')
     return result,numTimeout
 
-def playGames(numGame=10):
+def playGames(numGame=1):
     global win1,win2,draw,numTimeout
     for i in range(0,numGame):
         if(i<numGame/2):

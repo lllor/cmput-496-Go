@@ -31,7 +31,7 @@ class GtpConnection():
         self.go_engine = go_engine
         self.board = board
         signal.signal(signal.SIGALRM, self.handler)
-        self.flag = 0
+        #self.flag = 0
         self.commands = {
             "protocol_version": self.protocol_version_cmd,
             "quit": self.quit_cmd,
@@ -305,11 +305,8 @@ class GtpConnection():
             self.respond('{}'.format(winner))
         except Exception as e:
             self.respond('{}'.format(str(e)))
-
+#==========================================================================================
     def genmove_cmd(self, args):
-        """
-        Generate a move for the color args[0] in {'b', 'w'}, for the game of gomoku.
-        """
         board_color = args[0].lower()
         color = color_to_int(board_color)
         game_end, winner = self.board.check_game_end_gomoku()
@@ -320,89 +317,210 @@ class GtpConnection():
                 self.respond("resign")
             return
 
+        flag = self.oplessthanX(color,2)
+        if flag == 0:#more than 2
+            score_c = self.Score(color)
+            score_p = self.Score(3-color)
+
+            score_c = self.Sort(score_c)
+            score_p = self.Sort(score_p)
+
+            max_x_P, max_y_P, max_P = self.Evaluate(score_p)
+            max_x_C, max_y_C, max_C = self.Evaluate(score_c)
+            if max_P>max_C and max_C<1008611:
+                #self.respond("1")
+                row = max_x_P
+                col = max_y_P
+            else:
+                #self.respond("2")
+                #for i in range(7):
+                #    self.respond(score_c[i])
+                row = max_x_C
+                col = max_y_C
+            #self.respond(score_c)
+            #self.respond(score_p)
+            move = coord_to_point(row+1,col+1,7)
+        else:
+            move = self.good_start(color)
+
+        self.board.play_move_gomoku(move,color)
+        move_coord = point_to_coord(move, self.board.size)
+        move_as_string = format_point(move_coord)
+        self.respond(move_as_string)
+
+    def oplessthanX(self,color,x):
         count_oppoent = 0
-        
         board2D = GoBoardUtil.get_twoD_board(self.board)
-        #self.respond(board2D[3])
+        size = self.board.size
+        op = 3 - color
+        for i in range(size):
+            for j in range(size):
+                if board2D[i][j] == op:
+                    count_oppoent = count_oppoent + 1
+                if count_oppoent >= x:
+                    return 0
+        return 1
+
+    def good_start(self,color):
+        board2D = GoBoardUtil.get_twoD_board(self.board)
+        move = None
+        mid = board2D[3][3]
+        op = 3 - color 
+        if mid == 0:
+            move = coord_to_point(4,4,7) 
+        elif (board2D[2][3] == op or board2D[3][4]== op) and board2D[2][4] == 0:
+            move = coord_to_point(3,5,7) 
+        elif (board2D[4][3] == op or board2D[3][2]== op) and board2D[4][2] == 0:
+            move = coord_to_point(5,3,7)
+        elif (board2D[2][2] == op or board2D[4][4]== op) and board2D[4][2] == 0:
+            move = coord_to_point(5,3,7)
+        elif (board2D[2][4] == op or board2D[4][2]== op) and board2D[2][2] == 0: 
+            move = coord_to_point(3,3,7)
+        else:
+            if board2D[2][4] == 0:
+                move = coord_to_point(3,5,7)
+            elif board2D[4][2] == 0:
+                move = coord_to_point(5,3,7)
+            elif board2D[2][2] == 0:
+                move = coord_to_point(3,3,7)
+            elif board2D[4][4] == 0:
+                move = coord_to_point(5,5,7)
+
+        return move 
+
+    def Evaluate(self,score):
         for i in range(7):
             for j in range(7):
-                if board2D[i][j] == 3-color:
-                    count_oppoent = count_oppoent + 1
-                if count_oppoent >= 2:
-                    self.flag = 1
-                    break
+
+                if score[i][j][0] == 4:
+                    return i, j, 1008611
+                score[i][j][4] = score[i][j][0]*1000 + score[i][j][1]*100 + score[i][j][2]*10 + score[i][j][3]
+        max_x = 0
+        max_y = 0
+        max = 0
+        for i in range(7):
+            for j in range(7):
+                if max < score[i][j][4]:
+                    max = score[i][j][4]
+                    max_x = i
+                    max_y = j
+        #print("the max is "+ str(max) + " at ( "+ str(max_x)+" , "+str(max_y)+" )")
+        return max_x, max_y, max
+
+
+    def Sort(self, score):
+        for i in score:
+            for j in i:
+                for x in range(5):
+                    for w in range(3, x - 1, -1):
+                        if j[w - 1] < j[w]:
+                            temp = j[w]
+                            j[w - 1] = j[w]
+                            j[w] = temp
+        #print("This Time Sort Done !")
+        return score
+    def Score(self,color):
+        board2D = GoBoardUtil.get_twoD_board(self.board)
+        score = [[[0 for high in range(5)] for col in range(7)] for row in range(7)]
         
-        self.respond(self.flag)
-        if self.flag == 1:
-            moves = self.board.get_empty_points()
-            board_is_full = (len(moves) == 0)
-            if board_is_full:
-                self.respond("pass")
-                return
-            move=None
-            try:
-                signal.alarm(int(self.timelimit))
-                self.sboard = self.board.copy()
-                move = self.go_engine.get_move(self.board, color)
-                self.board=self.sboard
-                signal.alarm(0)
-            except Exception as e:
-                move=self.go_engine.best_move
+        for i in range(7):
+            for j in range(7):
+                 if board2D[i][j] == 0:
+                    row = i
+                    col = j
+                    #for col
+                    while col - 1 >=0 and board2D[row][col-1] == color:
+                        col -= 1
+                        score[i][j][0] += 10
+                    if col - 1 >= 0 and board2D[row][col-1] == 0:
+                        score[i][j][0] += 1
+                    if col - 1 >= 0 and board2D[row][col-1] == 3-color:
+                        score[i][j][0] -= 2
 
-            if move == PASS:
-                self.respond("pass")
-                return
-            move_coord = point_to_coord(move, self.board.size)
-            move_as_string = format_point(move_coord)
-            if self.board.is_legal_gomoku(move, color):
-                self.board.play_move_gomoku(move, color)
-                self.respond(move_as_string)
-            else:
-                self.respond("illegal move: {}".format(move_as_string))
-        else:
-            #self.respond(board2D[3])
-            mid = board2D[3][3]
-            if mid == 0:
-                move = coord_to_point(4,4,7)
-                self.board.play_move_gomoku(move, color)
-                self.respond("D4")
+                    row = i
+                    col = j
 
-            elif (board2D[2][3] == 3-color or board2D[3][4]== 3-color) and board2D[2][4] == 0:
-                move = coord_to_point(3,5,7)
-                self.board.play_move_gomoku(move, color)
-                self.respond("E3")
+                    while col + 1 <= 6 and board2D[row][col+1] == color:
+                        col += 1
+                        score[i][j][0] += 10
+                    if col + 1 <= 6 and board2D[row][col+1] == 0:
+                        score[i][j][0] += 1
+                    if col + 1 <= 6 and board2D[row][col+1] == 3-color:
+                        score[i][j][0] -= 2
 
-            elif (board2D[4][3] == 3-color or board2D[3][2]== 3-color) and board[4][2] == 0:
-                move = coord_to_point(5,3,7)
-                self.board.play_move_gomoku(move, color)
-                self.respond("C5")
+                    row = i
+                    col = j
+                    #for row
+                    while row - 1 >=0 and board2D[row-1][col] == color:
+                        row -= 1
+                        score[i][j][1] += 10
+                    if row - 1 >= 0 and board2D[row-1][col] == 0:
+                        score[i][j][1] += 1
+                    if row - 1 >= 0 and board2D[row-1][col] == 3-color:
+                        score[i][j][1] -= 2
 
-            elif (board2D[2][2] == 3-color or board2D[4][4]== 3-color) and board[4][2] == 0:
-                move = coord_to_point(5,3,7)
-                self.board.play_move_gomoku(move, color)
-                self.respond("C5")
+                    row = i
+                    col = j
 
-            elif (board2D[2][4] == 3-color or board2D[4][2]== 3-color) and board[2][2] == 0: 
-                move = coord_to_point(3,3,7)
-                self.board.play_move_gomoku(move, color)
-                self.respond("C3")
-            else:
-                if board2D[2][4] == 0:
-                    move = coord_to_point(3,5,7)
-                    self.board.play_move_gomoku(move, color)
-                    self.respond("E3")
-                elif board2D[4][2] == 0:
-                    move = coord_to_point(5,3,7)
-                    self.board.play_move_gomoku(move, color)
-                    self.respond("C5")
-                elif board2D[2][2] == 0:
-                    move = coord_to_point(3,3,7)
-                    self.board.play_move_gomoku(move, color)
-                    self.respond("C3")
-                elif board2D[4][4] == 0:
-                    move = coord_to_point(5,5,7)
-                    self.board.play_move_gomoku(move, color)
-                    self.respond("E5")
+                    while row + 1 <=6 and board2D[row+1][col] == color:
+                        row += 1
+                        score[i][j][1] += 10
+                    if row + 1 <= 6 and board2D[row+1][col] == 0:
+                        score[i][j][1] += 1
+                    if row + 1 <= 6 and board2D[row+1][col] == 3-color:
+                        score[i][j][1] -= 2
+
+                    row = i
+                    col = j
+
+                    #for diag 
+                    while row + 1 <= 6 and col - 1 >= 0 and board2D[row+1][col-1] == color:
+                        row += 1
+                        col -= 1
+                        score[i][j][2] += 10
+                    if row + 1 <= 6 and col - 1 >= 0 and board2D[row+1][col-1] == 0:
+                        score[i][j][2] += 1
+                    if row + 1 <= 6 and col - 1 >= 0 and board2D[row+1][col-1] == 3-color:
+                        score[i][j][2] -= 2
+
+                    row = i
+                    col = j
+
+                    while row - 1 >=0 and col +1 <= 6 and board2D[row-1][col+1] == color:
+                        row -= 1
+                        col += 1
+                        score[i][j][2] += 10
+                    if row - 1 >=0 and col +1 <= 6 and board2D[row-1][col+1] == 0:
+                        score[i][j][2] += 1
+                    if row - 1 >=0 and col +1 <= 6 and board2D[row-1][col+1] == 3-color:
+                        score[i][j][2] -= 2
+
+                    row = i
+                    col = j
+
+                    #for diag 
+                    while row + 1 <= 6 and col + 1 <= 6 and board2D[row+1][col+1] == color:
+                        row += 1
+                        col += 1
+                        score[i][j][3] += 10
+                    if row + 1 <= 6 and col + 1 <= 6 and board2D[row+1][col+1] == 0:
+                        score[i][j][3] += 1
+                    if row + 1 <= 6 and col + 1 <= 6 and board2D[row+1][col+1] == 3-color:
+                        score[i][j][3] -= 2
+
+                    row = i
+                    col = j
+
+                    while row - 1 >=0 and col -1 <= 6 and board2D[row-1][col-1] == color:
+                        row -= 1
+                        col -= 1
+                        score[i][j][3] += 10
+                    if row - 1 >=0 and col -1 <= 6 and board2D[row-1][col-1] == 0:
+                        score[i][j][3] += 1
+                    if row - 1 >=0 and col -1 <= 6 and board2D[row-1][col-1] == 3-color:
+                        score[i][j][3] -= 2
+        return score
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ 
     def gogui_rules_game_id_cmd(self, args):
         self.respond("Gomoku")
     
