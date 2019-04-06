@@ -325,20 +325,16 @@ class GtpConnection():
             score_c = self.Sort(score_c)
             score_p = self.Sort(score_p)
 
-            max_x_P, max_y_P, max_P = self.Evaluate(score_p)
-            max_x_C, max_y_C, max_C = self.Evaluate(score_c)
-            if max_P>max_C and max_C<1008611:
+            x_P, y_P, max_P = self.Evaluate(score_p)
+            x_C, y_C, max_C = self.Evaluate(score_c)
+            if max_P>max_C and max_C<1000000:
                 #self.respond("1")
-                row = max_x_P
-                col = max_y_P
+                row = x_P
+                col = y_P
             else:
-                #self.respond("2")
-                #for i in range(7):
-                #    self.respond(score_c[i])
-                row = max_x_C
-                col = max_y_C
-            #self.respond(score_c)
-            #self.respond(score_p)
+                row = x_C
+                col = y_C
+
             move = coord_to_point(row+1,col+1,7)
         else:
             move = self.good_start(color)
@@ -393,7 +389,7 @@ class GtpConnection():
             for j in range(7):
 
                 if score[i][j][0] == 4:
-                    return i, j, 1008611
+                    return i, j, 1000000
                 score[i][j][4] = score[i][j][0]*1000 + score[i][j][1]*100 + score[i][j][2]*10 + score[i][j][3]
         max_x = 0
         max_y = 0
@@ -404,7 +400,6 @@ class GtpConnection():
                     max = score[i][j][4]
                     max_x = i
                     max_y = j
-        #print("the max is "+ str(max) + " at ( "+ str(max_x)+" , "+str(max_y)+" )")
         return max_x, max_y, max
 
 
@@ -417,7 +412,6 @@ class GtpConnection():
                             temp = j[w]
                             j[w - 1] = j[w]
                             j[w] = temp
-        #print("This Time Sort Done !")
         return score
     def Score(self,color):
         board2D = GoBoardUtil.get_twoD_board(self.board)
