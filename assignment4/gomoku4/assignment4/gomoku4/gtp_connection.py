@@ -321,14 +321,14 @@ class GtpConnection():
         if flag == 0:#more than 2
             score_c = self.Score(color)
             score_p = self.Score(3-color)
-
-            score_c = self.Sort(score_c)
-            score_p = self.Sort(score_p)
+            #self.respond(score_c)
+            score_c = self.Sort(score_c,1)
+            score_p = self.Sort(score_p,2)
 
             x_P, y_P, max_P = self.Evaluate(score_p)
             x_C, y_C, max_C = self.Evaluate(score_c)
             if max_P>max_C and max_C<1000000:
-                #self.respond("1")
+                self.respond("1")
                 row = x_P
                 col = y_P
             else:
@@ -387,132 +387,225 @@ class GtpConnection():
     def Evaluate(self,score):
         for i in range(7):
             for j in range(7):
-
                 if score[i][j][0] == 4:
                     return i, j, 1000000
                 score[i][j][4] = score[i][j][0]*1000 + score[i][j][1]*100 + score[i][j][2]*10 + score[i][j][3]
-        max_x = 0
-        max_y = 0
+        row = 0
+        col = 0
         max = 0
         for i in range(7):
             for j in range(7):
                 if max < score[i][j][4]:
                     max = score[i][j][4]
-                    max_x = i
-                    max_y = j
-        return max_x, max_y, max
+                    row = i
+                    col = j
+        return row, col, max
 
-
-    def Sort(self, score):
-        for i in score:
-            for j in i:
-                for x in range(5):
-                    for w in range(3, x - 1, -1):
-                        if j[w - 1] < j[w]:
-                            temp = j[w]
-                            j[w - 1] = j[w]
-                            j[w] = temp
+    def Sort(self, score,type):
+        for row in score:
+            for point in row:
+                if type == 1:
+                    max_s = max(point[0],point[1],point[2],point[3])
+                    point[0] = max_s
+                    point[1] = max_s
+                    point[2] = max_s
+                    point[3] = max_s
+                if type == 2:
+                    max_s = max(point[0],point[1],point[2],point[3])
+                    if max_s <= 70:
+                        point[0] = 0
+                        point[1] = 0
+                        point[2] = 0
+                        point[3] = 0
+                    else:
+                        point[0] = max_s
+                        point[1] = max_s
+                        point[2] = max_s
+                        point[3] = max_s
         return score
+    
+    def checkcol(self,color,row,col,board2D,score):
+        score = self.count(color,row,col,board2D,score,row,col,0,-1,0,0)
+        score = self.count(color,row,col,board2D,score,row,col,0,1,0,0)
+        return score
+    def checkrow(self,color,row,col,board2D,score):
+        score = self.count(color,row,col,board2D,score,row,col,-1,0,1,0)
+        score = self.count(color,row,col,board2D,score,row,col,1,0,1,0)
+        return score
+    def checkdig1(self,color,row,col,board2D,score):
+        score = self.count(color,row,col,board2D,score,row,col,1,-1,2,0)
+        score = self.count(color,row,col,board2D,score,row,col,-1,1,2,0)
+        return score
+    def checkdig2(self,color,row,col,board2D,score):
+        score = self.count(color,row,col,board2D,score,row,col,-1,-1,3,0)
+        score = self.count(color,row,col,board2D,score,row,col,1,1,3,0)
+        return score
+    def checkfive(self,row,col,board2D,row_step,col_step,depth,color,orig_row,orig_col):
+    	cons = depth
+    	while col+col_step>= 0 and col +col_step <=6 and row+row_step>=0 and row+row_step<= 6:
+    		if (board2D[row+row_step][col+col_step] == 0 or board2D[row+row_step][col+col_step] == color) and cons < 5:
+    			cons += 1
+    			row = row+row_step
+    			row = col+col_step
+    		else:
+    			break
+    	row = orig_row
+    	col = orig_col
+    	
+    	while col-col_step>= 0 and col -col_step <=6 and row-row_step>=0 and row-row_step<= 6:
+    		if (board2D[row-row_step][col-col_step] == 0 or board2D[row-row_step][col-col_step] == color) and cons < 5:
+    			cons += 1
+    			row = row-row_step
+    			row = col-col_step
+    		else:
+    			break
+    	#str1 = str(row)+","+str(col)+" : "+str(cons)
+    	#self.respond(str1)
+
+    	return cons
+    def count(self,color,row,col,board2D,score,orig_row,orig_col,row_step,col_step,pos,depth):
+        if col+col_step>= 0 and col +col_step <=6 and row+row_step>=0 and row+row_step<= 6:
+            if board2D[row+row_step][col+col_step] != color:
+                if board2D[row+row_step][col+col_step] == 0:
+                    cons = self.checkfive(row,col,board2D,row_step,col_step,depth,color,row,col)
+                    if cons == 5:
+                        score[orig_row][orig_col][pos] += 10
+                    else:
+                        score[orig_row][orig_col][pos] = 0
+
+                if board2D[row+row_step][col+col_step] == 3-color:
+                    score[orig_row][orig_col][pos] -= 2
+                return score
+            else:
+                #self.respond(score[orig_row][orig_col])
+                score[orig_row][orig_col][pos] += 20
+                self.count(color,row+row_step,col+col_step,board2D,score,orig_row,orig_col,row_step,col_step,pos,depth+1)
+        return score
+    
+
     def Score(self,color):
         board2D = GoBoardUtil.get_twoD_board(self.board)
-        score = [[[0 for high in range(5)] for col in range(7)] for row in range(7)]
+        score = [[[0 for dirc in range(5)] for col in range(7)] for row in range(7)]
         
         for i in range(7):
             for j in range(7):
                  if board2D[i][j] == 0:
                     row = i
                     col = j
+                    score = self.checkcol(color,row,col,board2D,score)
+                    score = self.checkrow(color,row,col,board2D,score)
+                    score = self.checkdig1(color,row,col,board2D,score)
+                    score = self.checkdig2(color,row,col,board2D,score)
                     #for col
-                    while col - 1 >=0 and board2D[row][col-1] == color:
-                        col -= 1
-                        score[i][j][0] += 10
-                    if col - 1 >= 0 and board2D[row][col-1] == 0:
-                        score[i][j][0] += 1
-                    if col - 1 >= 0 and board2D[row][col-1] == 3-color:
-                        score[i][j][0] -= 2
+                    # while col - 1 >=0: and board2D[row][col-1] == color:
+                    #     if board2D[row][col-1] == color:
+                    #         col -= 1
+                    #         score[i][j][0] += 10
+                    #     if col - 1 >= 0 and board2D[row][col-1] == 0:
+                    #         score[i][j][0] += 1
+                    #         break
+                    #     if col - 1 >= 0 and board2D[row][col-1] == 3-color:
+                    #         score[i][j][0] -= 2
+                    #         break
+                    # row = i
+                    # col = j
 
-                    row = i
-                    col = j
+                    # while col + 1 <= 6:
+                    #     if board2D[row][col+1] == color:
+                    #         col += 1
+                    #         score[i][j][0] += 10
+                    #     if col + 1 <= 6 and board2D[row][col+1] == 0:
+                    #         score[i][j][0] += 1
+                    #         break
+                    #     if col + 1 <= 6 and board2D[row][col+1] == 3-color:
+                    #         score[i][j][0] -= 2
+                    #         break
+                    # row = i
+                    # col = j
+                    # #for row
+                    # while row - 1 >=0:
+                    #     if board2D[row-1][col] == color:
+                    #         row -= 1
+                    #         score[i][j][1] += 10
+                    #     if row - 1 >= 0 and board2D[row-1][col] == 0:
+                    #         score[i][j][1] += 1
+                    #         break
+                    #     if row - 1 >= 0 and board2D[row-1][col] == 3-color:
+                    #         score[i][j][1] -= 2
+                    #         break
+                    # row = i
+                    # col = j
 
-                    while col + 1 <= 6 and board2D[row][col+1] == color:
-                        col += 1
-                        score[i][j][0] += 10
-                    if col + 1 <= 6 and board2D[row][col+1] == 0:
-                        score[i][j][0] += 1
-                    if col + 1 <= 6 and board2D[row][col+1] == 3-color:
-                        score[i][j][0] -= 2
+                    # while row + 1 <=6:
+                    #     if board2D[row+1][col] == color:
+                    #         row += 1
+                    #         score[i][j][1] += 10
+                    #     if row + 1 <= 6 and board2D[row+1][col] == 0:
+                    #         score[i][j][1] += 1
+                    #         break
+                    #     if row + 1 <= 6 and board2D[row+1][col] == 3-color:
+                    #         score[i][j][1] -= 2
+                    #         break
+                    # row = i
+                    # col = j
 
-                    row = i
-                    col = j
-                    #for row
-                    while row - 1 >=0 and board2D[row-1][col] == color:
-                        row -= 1
-                        score[i][j][1] += 10
-                    if row - 1 >= 0 and board2D[row-1][col] == 0:
-                        score[i][j][1] += 1
-                    if row - 1 >= 0 and board2D[row-1][col] == 3-color:
-                        score[i][j][1] -= 2
+                    # #for diag 
+                    # while row + 1 <= 6 and col - 1 >= 0:
+                    #     if board2D[row+1][col-1] == color:
+                    #         row += 1
+                    #         col -= 1
+                    #         score[i][j][2] += 10
+                    #     if row + 1 <= 6 and col - 1 >= 0 and board2D[row+1][col-1] == 0:
+                    #         score[i][j][2] += 1
+                    #         break
+                    #     if row + 1 <= 6 and col - 1 >= 0 and board2D[row+1][col-1] == 3-color:
+                    #         score[i][j][2] -= 2
+                    #         break
+                    # row = i
+                    # col = j
 
-                    row = i
-                    col = j
+                    # while row - 1 >=0 and col +1 <= 6:
+                    #     if board2D[row-1][col+1] == color:
+                    #         row -= 1
+                    #         col += 1
+                    #         score[i][j][2] += 10
+                    #     if row - 1 >=0 and col +1 <= 6 and board2D[row-1][col+1] == 0:
+                    #         score[i][j][2] += 1
+                    #         break
+                    #     if row - 1 >=0 and col +1 <= 6 and board2D[row-1][col+1] == 3-color:
+                    #         score[i][j][2] -= 2
+                    #         break
 
-                    while row + 1 <=6 and board2D[row+1][col] == color:
-                        row += 1
-                        score[i][j][1] += 10
-                    if row + 1 <= 6 and board2D[row+1][col] == 0:
-                        score[i][j][1] += 1
-                    if row + 1 <= 6 and board2D[row+1][col] == 3-color:
-                        score[i][j][1] -= 2
+                    # row = i
+                    # col = j
 
-                    row = i
-                    col = j
+                    # #for diag 
+                    # while row + 1 <= 6 and col + 1 <= 6:
+                    #     if board2D[row+1][col+1] == color:
+                    #         row += 1
+                    #         col += 1
+                    #         score[i][j][3] += 10
+                    #     if row + 1 <= 6 and col + 1 <= 6 and board2D[row+1][col+1] == 0:
+                    #         score[i][j][3] += 1
+                    #         break
+                    #     if row + 1 <= 6 and col + 1 <= 6 and board2D[row+1][col+1] == 3-color:
+                    #         break
+                    #         score[i][j][3] -= 2
 
-                    #for diag 
-                    while row + 1 <= 6 and col - 1 >= 0 and board2D[row+1][col-1] == color:
-                        row += 1
-                        col -= 1
-                        score[i][j][2] += 10
-                    if row + 1 <= 6 and col - 1 >= 0 and board2D[row+1][col-1] == 0:
-                        score[i][j][2] += 1
-                    if row + 1 <= 6 and col - 1 >= 0 and board2D[row+1][col-1] == 3-color:
-                        score[i][j][2] -= 2
+                    # row = i
+                    # col = j
 
-                    row = i
-                    col = j
-
-                    while row - 1 >=0 and col +1 <= 6 and board2D[row-1][col+1] == color:
-                        row -= 1
-                        col += 1
-                        score[i][j][2] += 10
-                    if row - 1 >=0 and col +1 <= 6 and board2D[row-1][col+1] == 0:
-                        score[i][j][2] += 1
-                    if row - 1 >=0 and col +1 <= 6 and board2D[row-1][col+1] == 3-color:
-                        score[i][j][2] -= 2
-
-                    row = i
-                    col = j
-
-                    #for diag 
-                    while row + 1 <= 6 and col + 1 <= 6 and board2D[row+1][col+1] == color:
-                        row += 1
-                        col += 1
-                        score[i][j][3] += 10
-                    if row + 1 <= 6 and col + 1 <= 6 and board2D[row+1][col+1] == 0:
-                        score[i][j][3] += 1
-                    if row + 1 <= 6 and col + 1 <= 6 and board2D[row+1][col+1] == 3-color:
-                        score[i][j][3] -= 2
-
-                    row = i
-                    col = j
-
-                    while row - 1 >=0 and col -1 <= 6 and board2D[row-1][col-1] == color:
-                        row -= 1
-                        col -= 1
-                        score[i][j][3] += 10
-                    if row - 1 >=0 and col -1 <= 6 and board2D[row-1][col-1] == 0:
-                        score[i][j][3] += 1
-                    if row - 1 >=0 and col -1 <= 6 and board2D[row-1][col-1] == 3-color:
-                        score[i][j][3] -= 2
+                    # while row - 1 >=0 and col -1 <= 6:
+                    #     if board2D[row-1][col-1] == color:
+                    #         row -= 1
+                    #         col -= 1
+                    #         score[i][j][3] += 10
+                    #     if row - 1 >=0 and col -1 <= 6 and board2D[row-1][col-1] == 0:
+                    #         score[i][j][3] += 1
+                    #         break
+                    #     if row - 1 >=0 and col -1 <= 6 and board2D[row-1][col-1] == 3-color:
+                    #         score[i][j][3] -= 2
+                    #         break
         return score
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ 
     def gogui_rules_game_id_cmd(self, args):
