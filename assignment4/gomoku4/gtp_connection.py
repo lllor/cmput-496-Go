@@ -367,25 +367,42 @@ class GtpConnection():
                 self.board.play_move_gomoku(move, color)
                 self.respond("D4")
 
-            elif board2D[2][3] == 3-color or board2D[3][4]== 3-color:
+            elif (board2D[2][3] == 3-color or board2D[3][4]== 3-color) and board2D[2][4] == 0:
                 move = coord_to_point(3,5,7)
                 self.board.play_move_gomoku(move, color)
-                self.respond("E2")
+                self.respond("E3")
 
-            elif board2D[4][3] == 3-color or board2D[3][2]== 3-color:
+            elif (board2D[4][3] == 3-color or board2D[3][2]== 3-color) and board[4][2] == 0:
                 move = coord_to_point(5,3,7)
                 self.board.play_move_gomoku(move, color)
-                self.respond("C4")
+                self.respond("C5")
 
-            elif board2D[2][2] == 3-color or board2D[4][4]== 3-color:
+            elif (board2D[2][2] == 3-color or board2D[4][4]== 3-color) and board[4][2] == 0:
                 move = coord_to_point(5,3,7)
                 self.board.play_move_gomoku(move, color)
-                self.respond("C4")
+                self.respond("C5")
 
-            elif board2D[2][4] == 3-color or board2D[4][2]== 3-color: 
+            elif (board2D[2][4] == 3-color or board2D[4][2]== 3-color) and board[2][2] == 0: 
                 move = coord_to_point(3,3,7)
                 self.board.play_move_gomoku(move, color)
-                self.respond("C2")
+                self.respond("C3")
+            else:
+                if board2D[2][4] == 0:
+                    move = coord_to_point(3,5,7)
+                    self.board.play_move_gomoku(move, color)
+                    self.respond("E3")
+                elif board2D[4][2] == 0:
+                    move = coord_to_point(5,3,7)
+                    self.board.play_move_gomoku(move, color)
+                    self.respond("C5")
+                elif board2D[2][2] == 0:
+                    move = coord_to_point(3,3,7)
+                    self.board.play_move_gomoku(move, color)
+                    self.respond("C3")
+                elif board2D[4][4] == 0:
+                    move = coord_to_point(5,5,7)
+                    self.board.play_move_gomoku(move, color)
+                    self.respond("E5")
     def gogui_rules_game_id_cmd(self, args):
         self.respond("Gomoku")
     
