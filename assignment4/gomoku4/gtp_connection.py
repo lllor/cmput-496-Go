@@ -309,15 +309,16 @@ class GtpConnection():
         board2D = GoBoardUtil.get_twoD_board(self.board)
         move = None
         mid = board2D[3][3]
+        op = 3 - color 
         if mid == 0:
             move = coord_to_point(4,4,7) 
-        elif (board2D[2][3] == 3-color or board2D[3][4]== 3-color) and board2D[2][4] == 0:
+        elif (board2D[2][3] == op or board2D[3][4]== op) and board2D[2][4] == 0:
             move = coord_to_point(3,5,7) 
-        elif (board2D[4][3] == 3-color or board2D[3][2]== 3-color) and board[4][2] == 0:
+        elif (board2D[4][3] == op or board2D[3][2]== op) and board[4][2] == 0:
             move = coord_to_point(5,3,7)
-        elif (board2D[2][2] == 3-color or board2D[4][4]== 3-color) and board[4][2] == 0:
+        elif (board2D[2][2] == op or board2D[4][4]== op) and board[4][2] == 0:
             move = coord_to_point(5,3,7)
-        elif (board2D[2][4] == 3-color or board2D[4][2]== 3-color) and board[2][2] == 0: 
+        elif (board2D[2][4] == op or board2D[4][2]== op) and board[2][2] == 0: 
             move = coord_to_point(3,3,7)
         else:
             if board2D[2][4] == 0:
@@ -370,9 +371,10 @@ class GtpConnection():
         try:
             signal.alarm(int(self.timelimit))
             self.sboard = self.board.copy()
+            move = None
             if flag:
                 move = self.good_start(color)
-            else:
+            if not move:
                 move = self.go_engine.get_move(self.board, color)
             self.board=self.sboard
             signal.alarm(0)
