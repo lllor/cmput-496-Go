@@ -31,7 +31,6 @@ class GtpConnection():
         self.go_engine = go_engine
         self.board = board
         signal.signal(signal.SIGALRM, self.handler)
-        self.flag = 0
         self.commands = {
             "protocol_version": self.protocol_version_cmd,
             "quit": self.quit_cmd,
@@ -335,14 +334,15 @@ class GtpConnection():
     def oplessthanX(self,color,x):
         count_oppoent = 0
         board2D = GoBoardUtil.get_twoD_board(self.board)
-        #self.respond(board2D[3])
-        for i in range(7):
-            for j in range(7):
-                if board2D[i][j] == 3-color:
+        size = self.board.size
+        op = 3 - color
+        for i in range(size):
+            for j in range(size):
+                if board2D[i][j] == op:
                     count_oppoent = count_oppoent + 1
                 if count_oppoent >= x:
-                    return 1
-        return 0
+                    return 0
+        return 1
         
     def genmove_cmd(self, args):
         """
@@ -370,7 +370,7 @@ class GtpConnection():
         try:
             signal.alarm(int(self.timelimit))
             self.sboard = self.board.copy()
-            if self.flag == 0:
+            if flag:
                 move = self.good_start(color)
             else:
                 move = self.go_engine.get_move(self.board, color)
@@ -389,50 +389,6 @@ class GtpConnection():
             self.respond(move_as_string)
         else:
             self.respond("illegal move: {}".format(move_as_string))
-        # else:
-        #     #self.respond(board2D[3])
-        #     mid = board2D[3][3]
-        #     if mid == 0:
-        #         move = coord_to_point(4,4,7)
-        #         self.board.play_move_gomoku(move, color)
-        #         self.respond("D4")
-
-        #     elif (board2D[2][3] == 3-color or board2D[3][4]== 3-color) and board2D[2][4] == 0:
-        #         move = coord_to_point(3,5,7)
-        #         self.board.play_move_gomoku(move, color)
-        #         self.respond("E3")
-
-        #     elif (board2D[4][3] == 3-color or board2D[3][2]== 3-color) and board[4][2] == 0:
-        #         move = coord_to_point(5,3,7)
-        #         self.board.play_move_gomoku(move, color)
-        #         self.respond("C5")
-
-        #     elif (board2D[2][2] == 3-color or board2D[4][4]== 3-color) and board[4][2] == 0:
-        #         move = coord_to_point(5,3,7)
-        #         self.board.play_move_gomoku(move, color)
-        #         self.respond("C5")
-
-        #     elif (board2D[2][4] == 3-color or board2D[4][2]== 3-color) and board[2][2] == 0: 
-        #         move = coord_to_point(3,3,7)
-        #         self.board.play_move_gomoku(move, color)
-        #         self.respond("C3")
-        #     else:
-        #         if board2D[2][4] == 0:
-        #             move = coord_to_point(3,5,7)
-        #             self.board.play_move_gomoku(move, color)
-        #             self.respond("E3")
-        #         elif board2D[4][2] == 0:
-        #             move = coord_to_point(5,3,7)
-        #             self.board.play_move_gomoku(move, color)
-        #             self.respond("C5")
-        #         elif board2D[2][2] == 0:
-        #             move = coord_to_point(3,3,7)
-        #             self.board.play_move_gomoku(move, color)
-        #             self.respond("C3")
-        #         elif board2D[4][4] == 0:
-        #             move = coord_to_point(5,5,7)
-        #             self.board.play_move_gomoku(move, color)
-        #             self.respond("E5")
 
     def gogui_rules_game_id_cmd(self, args):
         self.respond("Gomoku")
