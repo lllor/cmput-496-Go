@@ -328,7 +328,7 @@ class GtpConnection():
             x_P, y_P, max_P = self.Evaluate(score_p)
             x_C, y_C, max_C = self.Evaluate(score_c)
             if max_P>max_C and max_C<1000000:
-                #self.respond("1")
+                self.respond("1")
                 row = x_P
                 col = y_P
             else:
@@ -464,17 +464,22 @@ class GtpConnection():
 
     	return cons
     def count(self,color,row,col,board2D,score,orig_row,orig_col,row_step,col_step,pos,depth):
+    	flag = 0
         if col+col_step>= 0 and col +col_step <=6 and row+row_step>=0 and row+row_step<= 6:
             if board2D[row+row_step][col+col_step] != color:
                 if board2D[row+row_step][col+col_step] == 0:
                     cons = self.checkfive(row,col,board2D,row_step,col_step,depth,color,row,col)
                     if cons == 5:
                         score[orig_row][orig_col][pos] += 1
+                        depth = 5
                     else:
                         score[orig_row][orig_col][pos] -= 1
-
                 if board2D[row+row_step][col+col_step] == 3-color:
-                    score[orig_row][orig_col][pos] -= 2
+                    if depth < 5:    
+                        score[orig_row][orig_col][pos] = 0
+                    else:
+                        score[orig_row][orig_col][pos] -= 2
+                
                 return score
             else:
                 #self.respond(score[orig_row][orig_col])
