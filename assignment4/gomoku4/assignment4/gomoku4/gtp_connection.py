@@ -412,7 +412,7 @@ class GtpConnection():
                     point[3] = max_s
                 if type == 2:
                     max_s = max(point[0],point[1],point[2],point[3])
-                    if max_s <= 70:
+                    if max_s <= 43:
                         point[0] = 0
                         point[1] = 0
                         point[2] = 0
@@ -469,7 +469,7 @@ class GtpConnection():
                 if board2D[row+row_step][col+col_step] == 0:
                     cons = self.checkfive(row,col,board2D,row_step,col_step,depth,color,row,col)
                     if cons == 5:
-                        score[orig_row][orig_col][pos] += 10
+                        score[orig_row][orig_col][pos] += 1
                     else:
                         score[orig_row][orig_col][pos] = 0
 
