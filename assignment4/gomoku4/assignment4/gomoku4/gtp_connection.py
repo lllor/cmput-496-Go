@@ -328,7 +328,7 @@ class GtpConnection():
             x_P, y_P, max_P = self.Evaluate(score_p)
             x_C, y_C, max_C = self.Evaluate(score_c)
             if max_P>max_C and max_C<1000000:
-                self.respond("1")
+                #self.respond("1")
                 row = x_P
                 col = y_P
             else:
@@ -471,7 +471,7 @@ class GtpConnection():
                     if cons == 5:
                         score[orig_row][orig_col][pos] += 1
                     else:
-                        score[orig_row][orig_col][pos] = 0
+                        score[orig_row][orig_col][pos] -= 1
 
                 if board2D[row+row_step][col+col_step] == 3-color:
                     score[orig_row][orig_col][pos] -= 2
