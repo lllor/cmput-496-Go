@@ -31,6 +31,7 @@ class GtpConnection():
         self.go_engine = go_engine
         self.board = board
         signal.signal(signal.SIGALRM, self.handler)
+        #self.flag = 0
         self.commands = {
             "protocol_version": self.protocol_version_cmd,
             "quit": self.quit_cmd,
@@ -304,33 +305,65 @@ class GtpConnection():
             self.respond('{}'.format(winner))
         except Exception as e:
             self.respond('{}'.format(str(e)))
+#==========================================================================================
+    def get_move_score_based(self,color):
+        score_c = self.Score(color)
+        score_p = self.Score(3-color)
+        #self.respond(score_c)
+        score_c = self.Sort(score_c,1)
+        score_p = self.Sort(score_p,2)
 
-    def good_start(self,color):
-        board2D = GoBoardUtil.get_twoD_board(self.board)
-        move = None
-        mid = board2D[3][3]
-        op = 3 - color 
-        if mid == 0:
-            move = coord_to_point(4,4,7) 
-        elif (board2D[2][3] == op or board2D[3][4]== op) and board2D[2][4] == 0:
-            move = coord_to_point(3,5,7) 
-        elif (board2D[4][3] == op or board2D[3][2]== op) and board[4][2] == 0:
-            move = coord_to_point(5,3,7)
-        elif (board2D[2][2] == op or board2D[4][4]== op) and board[4][2] == 0:
-            move = coord_to_point(5,3,7)
-        elif (board2D[2][4] == op or board2D[4][2]== op) and board[2][2] == 0: 
-            move = coord_to_point(3,3,7)
+        x_P, y_P, max_P = self.Evaluate(score_p)
+        x_C, y_C, max_C = self.Evaluate(score_c)
+        if max_P>max_C and max_C<1000000:
+            #self.respond("1")
+            row = x_P
+            col = y_P
         else:
-            if board2D[2][4] == 0:
-                move = coord_to_point(3,5,7)
-            elif board2D[4][2] == 0:
-                move = coord_to_point(5,3,7)
-            elif board2D[2][2] == 0:
-                move = coord_to_point(3,3,7)
-            elif board2D[4][4] == 0:
-                move = coord_to_point(5,5,7)
+            row = x_C
+            col = y_C
+        move = coord_to_point(row+1,col+1,7)
+        return move
 
-        return move 
+    def genmove_cmd(self, args):
+        board_color = args[0].lower()
+        color = color_to_int(board_color)
+        game_end, winner = self.board.check_game_end_gomoku()
+        if game_end:
+            if winner == color:
+                self.respond("pass")
+            else:
+                self.respond("resign")
+            return
+
+        
+
+        flag = self.oplessthanX(color,2)
+        if flag == 0:#more than 2
+            score_c = self.Score(color)
+            score_p = self.Score(3-color)
+            #self.respond(score_c)
+            score_c = self.Sort(score_c,1)
+            score_p = self.Sort(score_p,2)
+
+            x_P, y_P, max_P = self.Evaluate(score_p)
+            x_C, y_C, max_C = self.Evaluate(score_c)
+            if max_P>max_C and max_C<1000000:
+                self.respond("1")
+                row = x_P
+                col = y_P
+            else:
+                row = x_C
+                col = y_C
+            move = coord_to_point(row+1,col+1,7)
+
+        else:
+            move = self.good_start(color)
+
+        self.board.play_move_gomoku(move,color)
+        move_coord = point_to_coord(move, self.board.size)
+        move_as_string = format_point(move_coord)
+        self.respond(move_as_string)
 
     def oplessthanX(self,color,x):
         count_oppoent = 0
@@ -344,54 +377,143 @@ class GtpConnection():
                 if count_oppoent >= x:
                     return 0
         return 1
-        
-    def genmove_cmd(self, args):
-        """
-        Generate a move for the color args[0] in {'b', 'w'}, for the game of gomoku.
-        """
-        board_color = args[0].lower()
-        color = color_to_int(board_color)
-        game_end, winner = self.board.check_game_end_gomoku()
-        if game_end:
-            if winner == color:
-                self.respond("pass")
-            else:
-                self.respond("resign")
-            return
 
-        flag = self.oplessthanX(color,2)
-        
-        
-        moves = self.board.get_empty_points()
-        board_is_full = (len(moves) == 0)
-        if board_is_full:
-            self.respond("pass")
-            return
-        
-        try:
-            signal.alarm(int(self.timelimit))
-            self.sboard = self.board.copy()
-            move = None
-            if flag:
-                move = self.good_start(color)
-            if not move:
-                move = self.go_engine.get_move(self.board, color)
-            self.board=self.sboard
-            signal.alarm(0)
-        except Exception as e:
-            move=self.go_engine.best_move
-
-        if move == PASS:
-            self.respond("pass")
-            return
-        move_coord = point_to_coord(move, self.board.size)
-        move_as_string = format_point(move_coord)
-        if self.board.is_legal_gomoku(move, color):
-            self.board.play_move_gomoku(move, color)
-            self.respond(move_as_string)
+    def good_start(self,color):
+        board2D = GoBoardUtil.get_twoD_board(self.board)
+        move = None
+        mid = board2D[3][3]
+        op = 3 - color 
+        if mid == 0:
+            move = coord_to_point(4,4,7) 
+        elif (board2D[2][3] == op or board2D[3][4]== op) and board2D[2][4] == 0:
+            move = coord_to_point(3,5,7) 
+        elif (board2D[4][3] == op or board2D[3][2]== op) and board2D[4][2] == 0:
+            move = coord_to_point(5,3,7)
+        elif (board2D[2][2] == op or board2D[4][4]== op) and board2D[4][2] == 0:
+            move = coord_to_point(5,3,7)
+        elif (board2D[2][4] == op or board2D[4][2]== op) and board2D[2][2] == 0: 
+            move = coord_to_point(3,3,7)
         else:
-            self.respond("illegal move: {}".format(move_as_string))
+            if board2D[2][4] == 0:
+                move = coord_to_point(3,5,7)
+            elif board2D[4][2] == 0:
+                move = coord_to_point(5,3,7)
+            elif board2D[2][2] == 0:
+                move = coord_to_point(3,3,7)
+            elif board2D[4][4] == 0:
+                move = coord_to_point(5,5,7)
 
+        return move 
+
+    def Evaluate(self,score):
+        for i in range(7):
+            for j in range(7):
+                if score[i][j][0] == 4:
+                    return i, j, 1000000
+                score[i][j][4] = score[i][j][0]*1000 + score[i][j][1]*100 + score[i][j][2]*10 + score[i][j][3]
+        row = 0
+        col = 0
+        max = 0
+        for i in range(7):
+            for j in range(7):
+                if max < score[i][j][4]:
+                    max = score[i][j][4]
+                    row = i
+                    col = j
+        str1 = str(score[4][3][4])+" "+str(score[5][3][4])
+        self.respond(str1)
+        str2 = str(row)+" "+str(col)+" "+str(max)
+        self.respond(str2)
+        return row, col, max
+
+    def Sort(self, score,type):
+        for i in score:
+            for point in i:
+                max_s = max(point[0],point[1],point[2],point[3])
+                point[0] = max_s
+                point[1] = max_s
+                point[2] = max_s
+                point[3] = max_s
+                # for x in range(5):
+                #     for w in range(3, x - 1, -1):
+                #         if j[w - 1] < j[w]:
+                #             temp = j[w]
+                #             j[w - 1] = j[w]
+                #             j[w] = temp
+        return score
+    
+    def checkcol(self,color,row,col,board2D,score):
+        score = self.count(color,row,col,board2D,score,row,col,0,-1,0,0)
+        score = self.count(color,row,col,board2D,score,row,col,0,1,0,0)
+        return score
+    def checkrow(self,color,row,col,board2D,score):
+        score = self.count(color,row,col,board2D,score,row,col,-1,0,1,0)
+        score = self.count(color,row,col,board2D,score,row,col,1,0,1,0)
+        return score
+    def checkdig1(self,color,row,col,board2D,score):
+        score = self.count(color,row,col,board2D,score,row,col,1,-1,2,0)
+        score = self.count(color,row,col,board2D,score,row,col,-1,1,2,0)
+        return score
+    def checkdig2(self,color,row,col,board2D,score):
+        score = self.count(color,row,col,board2D,score,row,col,-1,-1,3,0)
+        score = self.count(color,row,col,board2D,score,row,col,1,1,3,0)
+        return score
+    def checkfive(self,row,col,board2D,row_step,col_step,depth,color,orig_row,orig_col):
+        cons = depth
+        while col+col_step>= 0 and col +col_step <=6 and row+row_step>=0 and row+row_step<= 6:
+            if (board2D[row+row_step][col+col_step] == 0 or board2D[row+row_step][col+col_step] == color) and cons < 5:
+                cons += 1
+                row = row+row_step
+                row = col+col_step
+            else:
+                break
+        row = orig_row
+        col = orig_col
+        while col-col_step>= 0 and col -col_step <=6 and row-row_step>=0 and row-row_step<= 6:
+            if (board2D[row-row_step][col-col_step] == 0 or board2D[row-row_step][col-col_step] == color) and cons < 5:
+                cons += 1
+                row = row-row_step
+                row = col-col_step
+            else:
+                break
+        return cons
+    
+    def count(self,color,row,col,board2D,score,orig_row,orig_col,row_step,col_step,pos,depth):
+        if col+col_step>= 0 and col +col_step <=6 and row+row_step>=0 and row+row_step<= 6:
+            if board2D[row+row_step][col+col_step] != color:
+                if board2D[row+row_step][col+col_step] == 0:
+                    #cons = self.checkfive(row,col,board2D,row_step,col_step,depth,color,row,col)
+                    #if cons == 5:
+                    score[orig_row][orig_col][pos] += 1
+                    #else:
+                    #    score[orig_row][orig_col][pos] -= 1
+
+                if board2D[row+row_step][col+col_step] == 3-color:
+                    score[orig_row][orig_col][pos] -= 2
+                return score
+            else:
+                #self.respond(score[orig_row][orig_col])
+                score[orig_row][orig_col][pos] += 10
+                self.count(color,row+row_step,col+col_step,board2D,score,orig_row,orig_col,row_step,col_step,pos,depth+1)
+        return score
+    
+
+    def Score(self,color):
+        board2D = GoBoardUtil.get_twoD_board(self.board)
+        score = [[[0 for dirc in range(5)] for col in range(7)] for row in range(7)]
+        
+        for i in range(7):
+            for j in range(7):
+                if board2D[i][j] == 0:
+                    row = i
+                    col = j
+                    score = self.checkcol(color,row,col,board2D,score)
+                    score = self.checkrow(color,row,col,board2D,score)
+                    score = self.checkdig1(color,row,col,board2D,score)
+                    score = self.checkdig2(color,row,col,board2D,score)
+              
+        return score
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ 
     def gogui_rules_game_id_cmd(self, args):
         self.respond("Gomoku")
     
